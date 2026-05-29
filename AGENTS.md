@@ -4,7 +4,7 @@
 - This repository root is `~/Dotfiles`.
 - Chezmoi uses `~/Dotfiles/chezmoi` directly as its source directory.
 - Homelab server/container config lives in `homelab` and is intentionally separate from chezmoi-managed dotfiles.
-- First-run install scripts live in `scripts/`; `scripts/install.sh` is the main entrypoint, with distro-specific wrappers beside it.
+- First-run install scripts live in `scripts/`; `scripts/install.sh` installs and applies dotfiles only, with distro-specific wrappers beside it.
 - Do not move the git repository inside the chezmoi source; git should stay at `~/Dotfiles/.git`.
 
 ## Chezmoi Source
@@ -15,16 +15,16 @@
 
 ## Bootstrap Flow
 - `chezmoi apply` should only manage dotfiles.
-- First-run install scripts call `chezmoi/scripts/bootstrap.sh` explicitly after `chezmoi apply`.
-- Keep `chezmoi/scripts/bootstrap.sh` as a small dispatcher and put implementation in focused `chezmoi/scripts/lib/*.sh` modules.
+- First-run install scripts stop after `chezmoi apply`; run `chezmoi/scripts/bootstrap.sh` explicitly for packages, tools, services, and GNOME settings.
+- Keep `chezmoi/scripts/bootstrap.sh` as a small wrapper and put implementation in focused Python modules under `chezmoi/scripts/lib/`.
 
 ## Homelab
 - The fresh-server installer is `homelab/scripts/install-server.sh`.
 - Homelab lifecycle goes through `homelab/scripts/homelab.sh`; the older lifecycle scripts are wrappers.
-- Keep homelab implementation in focused `homelab/scripts/lib/*.sh` modules when it would otherwise become hard to read.
+- Keep homelab implementation in focused Python modules under `homelab/scripts/lib/` when it would otherwise become hard to read.
 - Homelab runtime state and secrets are ignored by `homelab/.gitignore`.
 
 ## Verification
 - Run all repository checks with: `scripts/check.sh`.
-- If diagnosing manually, check shell syntax with: `bash -n scripts/*.sh homelab/scripts/*.sh homelab/scripts/lib/*.sh chezmoi/scripts/bootstrap.sh chezmoi/scripts/lib/*.sh`.
+- If diagnosing manually, check shell syntax with: `bash -n scripts/*.sh homelab/scripts/*.sh chezmoi/scripts/bootstrap.sh`.
 - Preview chezmoi changes from the source tree with: `chezmoi --source="$HOME/Dotfiles/chezmoi" diff --exclude=scripts`.

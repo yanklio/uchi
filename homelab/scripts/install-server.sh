@@ -5,6 +5,7 @@ dotfiles_dir="${DOTFILES_DIR:-$HOME/Dotfiles}"
 chezmoi_source="$dotfiles_dir/chezmoi"
 homelab_dir="$dotfiles_dir/homelab"
 env_file="$homelab_dir/.env"
+package_manager=""
 
 have() {
   command -v "$1" >/dev/null 2>&1
@@ -24,11 +25,25 @@ require_sudo() {
 install_base_packages() {
   export PATH="$HOME/.local/bin:$PATH"
 
-  have apt-get || return 0
+  if have dnf; then
+    package_manager="dnf"
+  elif have apt-get; then
+    package_manager="apt-get"
+  else
+    echo "Neither dnf nor apt-get is available; skipping package install."
+    return 0
+  fi
 
-  echo "Installing base packages..."
-  sudo apt-get update
-  sudo apt-get install -y git curl
+  echo "Installing homelab packages..."
+  case "$package_manager" in
+    dnf)
+      sudo dnf install -y git curl ca-certificates podman nginx
+      ;;
+    apt-get)
+      sudo apt-get update
+      sudo apt-get install -y git curl ca-certificates podman nginx
+      ;;
+  esac
 
   if ! have chezmoi; then
     echo "Installing chezmoi..."
@@ -47,49 +62,6 @@ detect_gateway() {
 network_prefix() {
   local ip="$1"
   printf '%s.%s.%s' ${ip//./ }
-}
-
-write_server_role() {
-  local config tmp
-
-  config="$HOME/.config/chezmoi/chezmoi.toml"
-  mkdir -p "$HOME/.config/chezmoi"
-
-  if [[ ! -f "$config" ]]; then
-    cat > "$config" <<'EOF'
-[data]
-  machineRole = "server"
-EOF
-    return 0
-  fi
-
-  if grep -q '^[[:space:]]*machineRole[[:space:]]*=' "$config"; then
-    tmp="$(mktemp)"
-    while IFS= read -r line || [[ -n "$line" ]]; do
-      case "$line" in
-        *machineRole*) printf '  machineRole = "server"\n' ;;
-        *) printf '%s\n' "$line" ;;
-      esac
-    done < "$config" > "$tmp"
-    mv "$tmp" "$config"
-    return 0
-  fi
-
-  if ! grep -q '^\[data\]' "$config"; then
-    cat >> "$config" <<'EOF'
-
-[data]
-  machineRole = "server"
-EOF
-    return 0
-  fi
-
-  tmp="$(mktemp)"
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    printf '%s\n' "$line"
-    [[ "$line" == "[data]" ]] && printf '  machineRole = "server"\n'
-  done < "$config" > "$tmp"
-  mv "$tmp" "$config"
 }
 
 ensure_homelab_env() {
@@ -129,6 +101,14 @@ ensure_homelab_env() {
   chmod 600 "$env_file"
 }
 
+apply_dotfiles() {
+  echo "Initializing chezmoi..."
+  chezmoi init --source="$chezmoi_source"
+
+  echo "Applying dotfiles..."
+  chezmoi apply
+}
+
 main() {
   require_sudo
 
@@ -138,12 +118,9 @@ main() {
   fi
 
   install_base_packages
-  write_server_role
-
-  chezmoi init --source="$chezmoi_source"
-  chezmoi apply
-
+  apply_dotfiles
   ensure_homelab_env
+
   "$homelab_dir/scripts/homelab.sh" start
   "$homelab_dir/scripts/homelab.sh" nginx
 

@@ -3,8 +3,6 @@ set -euo pipefail
 
 dotfiles_repo="${DOTFILES_REPO:-https://github.com/yanklio/dotfiles.git}"
 dotfiles_dir="${DOTFILES_DIR:-$HOME/Dotfiles}"
-machine_role="${DOTFILES_MACHINE_ROLE:-client}"
-gnome_settings="${DOTFILES_GNOME_SETTINGS:-auto}"
 distro="auto"
 package_manager=""
 
@@ -14,14 +12,17 @@ usage() {
   cat <<EOF
 Usage: $0 [options]
 
+Installs the minimum dependencies, clones this repository, and applies the
+chezmoi dotfiles source. Workstation bootstrap and homelab setup are explicit
+follow-up commands.
+
 Options:
-  --server           Configure this machine as a homelab server before first apply
-  --client           Configure this machine as a client/workstation (default)
-  --gnome            Force GNOME settings during bootstrap
-  --no-gnome         Skip GNOME settings during bootstrap
   --repo URL         Clone from URL (default: $dotfiles_repo)
   --dir PATH         Clone to PATH (default: $dotfiles_dir)
   --distro NAME      Force package setup for auto, fedora, or debian
+  --fedora           Alias for --distro fedora
+  --debian           Alias for --distro debian
+  --ubuntu           Alias for --distro debian
   -h, --help         Show this help
 EOF
 }
@@ -45,10 +46,6 @@ as_root() {
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --server) machine_role="server" ;;
-      --client | --workstation) machine_role="client" ;;
-      --gnome) gnome_settings="on" ;;
-      --no-gnome) gnome_settings="off" ;;
       --fedora) distro="fedora" ;;
       --debian | --ubuntu) distro="debian" ;;
       --distro)
@@ -69,6 +66,11 @@ parse_args() {
         shift
         ;;
       --dir=*) dotfiles_dir="${1#*=}" ;;
+      --server | --client | --workstation | --gnome | --no-gnome)
+        echo "$1 is no longer handled by the dotfiles installer." >&2
+        echo "Run chezmoi/scripts/bootstrap.sh for workstation setup or homelab/scripts/install-server.sh for server setup." >&2
+        exit 2
+        ;;
       -h | --help) usage; exit 0 ;;
       *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
     esac
@@ -132,62 +134,8 @@ clone_dotfiles() {
   git clone "$dotfiles_repo" "$dotfiles_dir"
 }
 
-write_chezmoi_data() {
-  local config tmp
-  config="$HOME/.config/chezmoi/chezmoi.toml"
-
-  mkdir -p "$HOME/.config/chezmoi"
-  tmp="$(mktemp)"
-
-  if [[ -f "$config" ]]; then
-    awk -v role="$machine_role" -v gnome="$gnome_settings" '
-      /^\[data\][[:space:]]*$/ { in_data = 1; saw_data = 1; print; next }
-      /^\[/ {
-        if (in_data) {
-          if (!wrote_role) print "  machineRole = \"" role "\""
-          if (!wrote_gnome) print "  gnomeSettings = \"" gnome "\""
-        }
-        in_data = 0
-      }
-      in_data && /^[[:space:]]*machineRole[[:space:]]*=/ {
-        if (!wrote_role) print "  machineRole = \"" role "\""
-        wrote_role = 1
-        next
-      }
-      in_data && /^[[:space:]]*gnomeSettings[[:space:]]*=/ {
-        if (!wrote_gnome) print "  gnomeSettings = \"" gnome "\""
-        wrote_gnome = 1
-        next
-      }
-      { print }
-      END {
-        if (!saw_data) {
-          print ""
-          print "[data]"
-          print "  machineRole = \"" role "\""
-          print "  gnomeSettings = \"" gnome "\""
-        } else if (in_data) {
-          if (!wrote_role) print "  machineRole = \"" role "\""
-          if (!wrote_gnome) print "  gnomeSettings = \"" gnome "\""
-        }
-      }
-    ' "$config" > "$tmp"
-  else
-    cat > "$tmp" <<EOF
-[data]
-  machineRole = "$machine_role"
-  gnomeSettings = "$gnome_settings"
-EOF
-  fi
-
-  mv "$tmp" "$config"
-}
-
 apply_dotfiles() {
   local chezmoi_source="$dotfiles_dir/chezmoi"
-
-  export DOTFILES_MACHINE_ROLE="$machine_role"
-  export DOTFILES_GNOME_SETTINGS="$gnome_settings"
 
   echo "Initializing chezmoi..."
   chezmoi init --source="$chezmoi_source"
@@ -196,19 +144,15 @@ apply_dotfiles() {
   chezmoi apply
 }
 
-run_bootstrap() {
-  local bootstrap="$dotfiles_dir/chezmoi/scripts/bootstrap.sh"
+next_steps() {
+  cat <<EOF
 
-  [[ -x "$bootstrap" ]] || {
-    echo "Bootstrap script not found or not executable: $bootstrap" >&2
-    exit 1
-  }
+Dotfiles install complete.
 
-  export DOTFILES_MACHINE_ROLE="$machine_role"
-  export DOTFILES_GNOME_SETTINGS="$gnome_settings"
-
-  echo "Running bootstrap..."
-  "$bootstrap"
+Optional follow-up commands:
+  Workstation bootstrap: $dotfiles_dir/chezmoi/scripts/bootstrap.sh
+  Homelab server setup:  $dotfiles_dir/homelab/scripts/install-server.sh
+EOF
 }
 
 main() {
@@ -216,9 +160,8 @@ main() {
   install_base_packages
   install_chezmoi
   clone_dotfiles
-  write_chezmoi_data
   apply_dotfiles
-  run_bootstrap
+  next_steps
 }
 
 main "$@"

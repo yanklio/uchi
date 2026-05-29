@@ -7,6 +7,8 @@ services:
       PORT: 3000
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://127.0.0.1:11434}
       WEBUI_NAME: Homelab Chat
+      ENABLE_RAG_WEB_LOADER_SSL_VERIFICATION: "False"
+      RAG_EMBEDDING_ENGINE: ""
     volumes:
       - ./data:/app/backend/data:z
     restart: unless-stopped

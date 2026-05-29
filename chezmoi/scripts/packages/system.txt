@@ -1,5 +1,5 @@
 # Format: package|roles|package-managers
-# roles: all, core, dev, desktop, server
+# roles: all, core, dev, desktop
 # package-managers: all, dnf, apt
 
 # Core
@@ -15,6 +15,8 @@ fastfetch|core|all
 htop|core|all
 curl|core|all
 stow|core|all
+podman|core|all
+nginx|core|all
 bat|core|all
 eza|core|all
 fzf|core|all
@@ -51,7 +53,3 @@ fonts-noto|desktop|apt
 fonts-noto-color-emoji|desktop|apt
 google-noto-sans-fonts|desktop|dnf
 google-noto-emoji-fonts|desktop|dnf
-
-# Server
-podman|server|all
-nginx|server|all
