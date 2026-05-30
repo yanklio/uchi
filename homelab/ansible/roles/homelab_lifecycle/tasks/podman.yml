@@ -1,0 +1,8 @@
+---
+- name: Require podman
+  ansible.builtin.command: podman --version
+  changed_when: false
+
+- name: Require podman compose
+  ansible.builtin.command: podman compose version
+  changed_when: false

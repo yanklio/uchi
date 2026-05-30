@@ -7,6 +7,7 @@ Local homelab services live here. Keep this separate from chezmoi-managed dotfil
 - `apps/`: Podman Compose app definitions.
 - `services/`: host service config managed from this repo.
 - `scripts/`: install, dispatcher, lifecycle wrappers, and shared libraries.
+- `ansible/`: lifecycle playbook and roles used by the dispatcher for container start/stop/status operations.
 
 ## Runtime Model
 
@@ -21,7 +22,7 @@ Fresh server install after cloning or installing this repo:
 ~/Dotfiles/homelab/scripts/install-server.sh
 ```
 
-Manage the stack with the main dispatcher:
+Manage the stack with the main dispatcher. The lifecycle commands call `ansible/playbooks/homelab.yml` locally and pass the requested action into the `homelab_lifecycle` role:
 
 ```bash
 ~/Dotfiles/homelab/scripts/homelab.sh start
@@ -115,7 +116,7 @@ http://chat.gmk-de/
 ollama pull gemma4
 ```
 
-Run a dry-run preview without starting/stopping containers:
+Run a dry-run preview with Ansible check mode:
 
 ```bash
 HOMELAB_DRY_RUN=1 ./scripts/homelab.sh start

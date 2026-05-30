@@ -1,0 +1,37 @@
+---
+- name: Show rootless containers
+  ansible.builtin.command:
+    argv:
+      - podman
+      - ps
+      - --format
+      - "table {{ '{{' }}.Names{{ '}}' }}\t{{ '{{' }}.Status{{ '}}' }}\t{{ '{{' }}.Ports{{ '}}' }}"
+  register: homelab_rootless_status
+  changed_when: false
+  failed_when: false
+
+- name: Print rootless containers
+  ansible.builtin.debug:
+    msg: >-
+      {{ ['Rootless containers:'] +
+         ((homelab_rootless_status.rc == 0)
+          | ternary(homelab_rootless_status.stdout_lines, ['podman is not installed'])) }}
+
+- name: Show rootful containers
+  ansible.builtin.command:
+    argv:
+      - podman
+      - ps
+      - --format
+      - "table {{ '{{' }}.Names{{ '}}' }}\t{{ '{{' }}.Status{{ '}}' }}\t{{ '{{' }}.Ports{{ '}}' }}"
+  become: true
+  register: homelab_rootful_status
+  changed_when: false
+  failed_when: false
+
+- name: Print rootful containers
+  ansible.builtin.debug:
+    msg: >-
+      {{ ['Rootful containers:'] +
+         ((homelab_rootful_status.rc == 0)
+          | ternary(homelab_rootful_status.stdout_lines, ['podman is not installed'])) }}
