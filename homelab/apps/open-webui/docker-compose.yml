@@ -1,6 +1,6 @@
 services:
   open-webui:
-    image: ${OPEN_WEBUI_IMAGE:-ghcr.io/open-webui/open-webui:v0.6.10}
+    image: ${OPEN_WEBUI_IMAGE:-ghcr.io/open-webui/open-webui:v0.6.26}
     network_mode: host
     environment:
       HOST: 127.0.0.1

@@ -17,6 +17,10 @@ check_shell() {
 check_python() {
   echo "Checking Python syntax..."
   python3 -m py_compile "$root"/homelab/scripts/*.py
+  for python_file in "$root"/homelab/apps/*/*.py; do
+    [[ -f "$python_file" ]] || continue
+    python3 -m py_compile "$python_file"
+  done
 }
 
 check_yaml() {

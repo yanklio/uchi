@@ -9,7 +9,10 @@
 ## Script Flow
 
 - `scripts/homelab.sh` is a thin Python dispatcher wrapper.
-- Keep container lifecycle logic in `homelab/scripts/homelab.py`.
+- Keep `homelab/scripts/homelab.py` as the CLI entrypoint.
+- Keep container lifecycle helpers in `homelab/scripts/runtime.py`.
+- Keep app command loading in `homelab/scripts/app_commands.py`.
+- Register app-specific maintenance commands in `apps/<name>/actions.py` with a `COMMANDS` dict.
 - Ansible should trigger the CLI through tags and should not duplicate container logic.
 - Pi-hole DHCP must stay disabled unless explicitly configured.
 

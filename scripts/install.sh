@@ -19,10 +19,8 @@ Options:
   --repo URL            Clone from URL (default: $dotfiles_repo)
   --dir PATH            Clone to PATH (default: $dotfiles_dir)
   --branch NAME         Git branch (default: $dotfiles_branch)
-  --target NAME         Run workstation, server, or setup after clone
+  --target NAME         Run workstation or server after clone
   --distro NAME         Force package setup for auto, fedora, or debian
-  --fedora              Alias for --distro fedora
-  --debian, --ubuntu    Alias for --distro debian
   -h, --help            Show this help
 EOF
 }
@@ -43,8 +41,6 @@ as_root() {
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --fedora) distro="fedora" ;;
-      --debian | --ubuntu) distro="debian" ;;
       --distro) distro="${2:?--distro requires a value}"; shift ;;
       --repo) dotfiles_repo="${2:?--repo requires a value}"; shift ;;
       --dir) dotfiles_dir="${2:?--dir requires a value}"; shift ;;
@@ -119,7 +115,7 @@ Next commands:
   Check:       $dotfiles_dir/scripts/check.sh
 EOF
       ;;
-    workstation | server | setup) "$dotfiles_dir/scripts/$target.sh" ;;
+    workstation | server) "$dotfiles_dir/scripts/$target.sh" ;;
     *) echo "Unknown target: $target" >&2; exit 2 ;;
   esac
 }

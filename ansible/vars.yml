@@ -10,24 +10,85 @@ common_packages:
   - curl
   - ca-certificates
   - zsh
+  - zsh-autosuggestions
+  - zsh-syntax-highlighting
   - vim
   - neovim
   - tmux
   - fzf
   - ripgrep
+  - nodejs
+  - gcc
+  - python3
+
+common_fedora_packages:
+  - golang
+  - nodejs-npm
+
+common_debian_packages:
+  - npm
+  - golang-go
 
 workstation_packages:
+  - git-delta
+  - fastfetch
+  - htop
+  - stow
+  - podman
   - bat
-  - btop
   - eza
   - fd-find
-  - flatpak
+  - btop
   - gh
-  - htop
-  - podman
+  - flatpak
+  - xdg-utils
+  - wl-clipboard
+  - cava
+
+workstation_fedora_packages:
+  - vim-enhanced
   - zoxide
-  - zsh-autosuggestions
-  - zsh-syntax-highlighting
+  - bash-completion
+  - pgcli
+  - conda
+  - python3-pip
+  - python3-isort
+  - delve
+  - gopls
+  - black
+  - ruff
+  - google-noto-sans-fonts
+  - google-noto-emoji-fonts
+
+workstation_debian_packages:
+  - fonts-noto
+  - fonts-noto-color-emoji
+
+flatpak_packages:
+  - com.discord.Discord
+  - com.slack.Slack
+  - com.google.Chrome
+  - app.zen_browser.zen
+
+npm_packages:
+  - "@anthropic-ai/claude-code"
+  - opencode-ai
+  - "@mariozechner/pi-coding-agent"
+  - yarn
+
+go_tools:
+  - github.com/jesseduffield/lazygit@latest
+
+upstream_tools:
+  - command: zed
+    name: Zed
+    install_url: https://zed.dev/install.sh
+  - command: ollama
+    name: Ollama
+    install_url: https://ollama.com/install.sh
+  - command: tailscale
+    name: Tailscale
+    install_url: https://tailscale.com/install.sh
 
 server_packages:
   - git
@@ -40,7 +101,7 @@ server_packages:
 
 homelab_access_mode: tailscale-only
 homelab_app_bind: 127.0.0.1
-homelab_apps: glance,open-webui
+homelab_apps: pi-hole,glance,open-webui
 homelab_domain: home
 homelab_tailnet_dns_suffix: gmk-de
 homelab_tailnet_dns_names: glance,chat
@@ -57,7 +118,7 @@ dhcp_lease_time: 24h
 container_images:
   pihole: docker.io/pihole/pihole:2025.05.1
   glance: docker.io/glanceapp/glance:v0.8.4
-  open_webui: ghcr.io/open-webui/open-webui:v0.6.10
+  open_webui: ghcr.io/open-webui/open-webui:v0.6.26
 
 homelab_app_files:
   - src: apps/pi-hole/docker-compose.yml
@@ -68,3 +129,5 @@ homelab_app_files:
     dest: apps/glance/glance.yml
   - src: apps/open-webui/docker-compose.yml
     dest: apps/open-webui/docker-compose.yml
+  - src: apps/open-webui/actions.py
+    dest: apps/open-webui/actions.py

@@ -10,6 +10,8 @@ Local homelab services live here.
 
 ## Commands
 
+Run homelab operations from the repository root through the top-level wrapper scripts:
+
 ```bash
 ./scripts/containers.sh start
 ./scripts/containers.sh stop
@@ -17,5 +19,16 @@ Local homelab services live here.
 ./scripts/containers.sh status
 ./scripts/containers.sh doctor
 ```
+
+App-specific maintenance commands use this shape:
+
+```bash
+./scripts/containers.sh app open-webui
+./scripts/containers.sh app open-webui reset-data
+```
+
+`open-webui reset-data` is registered in `apps/open-webui/actions.py`. It is destructive for active Open WebUI data, but it keeps a timestamped backup next to the fresh `data/` directory.
+
+The control path is one-way: `scripts/containers.sh` calls Ansible, Ansible calls `homelab/scripts/homelab.sh`, and the homelab CLI calls Podman Compose. The homelab CLI does not call Ansible.
 
 The safe defaults are Tailscale-only access, localhost app binding, and DHCP disabled. Server setup does not start containers.
