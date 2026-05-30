@@ -29,12 +29,13 @@ require("lazy").setup({
   },
   {
     "nvim-telescope/telescope.nvim",
+    tag = "0.1.8",
     dependencies = {
       "nvim-lua/plenary.nvim",
       "nvim-telescope/telescope-ui-select.nvim",
     },
   },
-  { "neovim/nvim-lspconfig" },
+  { "neovim/nvim-lspconfig", tag = "v1.8.0" },
   {
     "hrsh7th/nvim-cmp",
     dependencies = {
@@ -55,7 +56,7 @@ require("lazy").setup({
   },
   { "nvim-lualine/lualine.nvim" },
   { "goolord/alpha-nvim" },
-  { "zbirenbaum/copilot.lua" },
+  { "zbirenbaum/copilot.lua", commit = "f12709a120ddb62e560afe8e956b6ea6955286df" },
   {
     "mfussenegger/nvim-dap",
     dependencies = {

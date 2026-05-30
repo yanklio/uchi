@@ -8,7 +8,11 @@ local lsp_servers = {
 
 for _, server in ipairs(lsp_servers) do
   if vim.fn.executable(server.executable) == 1 then
-    vim.lsp.config(server.name, { capabilities = capabilities })
-    vim.lsp.enable(server.name)
+    if vim.fn.has("nvim-0.11") == 1 then
+      vim.lsp.config(server.name, { capabilities = capabilities })
+      vim.lsp.enable(server.name)
+    else
+      require("lspconfig")[server.name].setup({ capabilities = capabilities })
+    end
   end
 end
