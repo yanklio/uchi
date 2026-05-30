@@ -200,22 +200,16 @@
       when: not homelab_env.stat.exists
 
     - name: Start homelab services
-      ansible.builtin.command:
-        argv:
-          - "{{ homelab_dir }}/scripts/homelab.sh"
-          - start
-      environment:
-        PATH: "{{ local_bin_dir }}:{{ ansible_env.PATH }}"
-      changed_when: true
+      ansible.builtin.include_role:
+        name: "{{ homelab_dir }}/ansible/roles/homelab_lifecycle"
+      vars:
+        homelab_action: start
 
     - name: Apply homelab nginx configuration
-      ansible.builtin.command:
-        argv:
-          - "{{ homelab_dir }}/scripts/homelab.sh"
-          - nginx
-      environment:
-        PATH: "{{ local_bin_dir }}:{{ ansible_env.PATH }}"
-      changed_when: true
+      ansible.builtin.include_role:
+        name: "{{ homelab_dir }}/ansible/roles/nginx"
+        apply:
+          become: true
 
     - name: Read generated homelab IP for verification message
       ansible.builtin.shell: |

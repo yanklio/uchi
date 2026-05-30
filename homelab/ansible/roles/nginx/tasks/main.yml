@@ -1,4 +1,39 @@
 ---
+- name: Check homelab .env for nginx access mode
+  ansible.builtin.stat:
+    path: "{{ homelab_env_file }}"
+  register: homelab_nginx_env_stat
+  become: false
+
+- name: Read homelab .env for nginx access mode
+  ansible.builtin.slurp:
+    src: "{{ homelab_env_file }}"
+  register: homelab_nginx_env_slurp
+  when: homelab_nginx_env_stat.stat.exists
+  become: false
+
+- name: Initialize nginx environment facts
+  ansible.builtin.set_fact:
+    homelab_nginx_env: {}
+
+- name: Parse nginx environment values
+  ansible.builtin.set_fact:
+    homelab_nginx_env: >-
+      {{ homelab_nginx_env | combine({
+        (item | regex_replace('^\s*([^=]+?)\s*=.*$', '\1') | trim):
+        (item | regex_replace('^\s*[^=]+?\s*=\s*(.*?)\s*$', '\1') | regex_replace('^(["\''])(.*)\1$', '\2'))
+      }) }}
+  loop: "{{ (homelab_nginx_env_slurp.content | b64decode).splitlines() if homelab_nginx_env_stat.stat.exists else [] }}"
+  when:
+    - item | trim | length > 0
+    - not (item | trim).startswith('#')
+    - "'=' in item"
+  no_log: true
+
+- name: Derive homelab nginx access mode
+  ansible.builtin.set_fact:
+    homelab_access_mode: "{{ lookup('ansible.builtin.env', 'HOMELAB_ACCESS_MODE') | default(homelab_nginx_env.HOMELAB_ACCESS_MODE | default('lan'), true) }}"
+
 - name: Validate homelab access mode
   ansible.builtin.assert:
     that:

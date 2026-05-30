@@ -16,7 +16,7 @@ check_shell() {
 
 check_python() {
   echo "Checking Python syntax..."
-  python3 -c 'import pathlib, sys; [compile(path.read_text(), str(path), "exec") for base in sys.argv[1:] for path in pathlib.Path(base).rglob("*.py")]' "$root/homelab/scripts" "$root/chezmoi/scripts"
+  python3 -c 'import pathlib, sys; [compile(path.read_text(), str(path), "exec") for base in sys.argv[1:] for path in pathlib.Path(base).rglob("*.py")]' "$root/chezmoi/scripts"
 }
 
 check_homelab_compose() {
@@ -58,7 +58,9 @@ check_ansible() {
   }
 
   echo "Checking Ansible playbooks..."
-  ansible-playbook --syntax-check -i localhost, "$root/homelab/playbook.yml"
+  ansible-playbook --syntax-check "$root/homelab/ansible/install-server.yml"
+  ansible-playbook --syntax-check "$root/homelab/ansible/homelab.yml"
+  ansible-playbook --syntax-check -i localhost, "$root/homelab/ansible/site.yml"
 }
 
 check_ignored_runtime_state() {

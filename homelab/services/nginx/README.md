@@ -19,7 +19,13 @@ Apply it with the homelab dispatcher:
 ~/Dotfiles/homelab/scripts/homelab.sh nginx
 ```
 
-The nginx command:
+Or run the Ansible site playbook directly:
+
+```bash
+ansible-playbook -i localhost, ~/Dotfiles/homelab/ansible/site.yml
+```
+
+The nginx Ansible role:
 1. Renders all `*.conf` from `homelab/services/nginx/conf.d/` to `/etc/nginx/conf.d/`
 2. Disables default nginx sites
 3. Tests nginx config

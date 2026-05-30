@@ -4,4 +4,4 @@
   connection: local
   gather_facts: false
   roles:
-    - role: homelab_lifecycle
+    - role: roles/homelab_lifecycle
