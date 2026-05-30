@@ -1,0 +1,232 @@
+---
+- name: Install and start homelab server
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars:
+    dotfiles_dir: "{{ lookup('env', 'DOTFILES_DIR') | default(ansible_env.HOME + '/Dotfiles', true) }}"
+    chezmoi_source: "{{ dotfiles_dir }}/chezmoi"
+    homelab_dir: "{{ dotfiles_dir }}/homelab"
+    homelab_env_file: "{{ homelab_dir }}/.env"
+    local_bin_dir: "{{ ansible_env.HOME }}/.local/bin"
+    chezmoi_bin: "{{ local_bin_dir }}/chezmoi"
+    base_packages:
+      - git
+      - curl
+      - ca-certificates
+      - podman
+      - nginx
+
+  tasks:
+    - name: Verify dotfiles repository exists
+      ansible.builtin.stat:
+        path: "{{ dotfiles_dir }}"
+      register: dotfiles_repo
+
+    - name: Fail when dotfiles repository is missing
+      ansible.builtin.fail:
+        msg: "Dotfiles repo not found: {{ dotfiles_dir }}"
+      when: not dotfiles_repo.stat.isdir | default(false)
+
+    - name: Detect dnf
+      ansible.builtin.shell: command -v dnf
+      args:
+        executable: /bin/bash
+      register: dnf_command
+      changed_when: false
+      failed_when: false
+
+    - name: Detect apt-get
+      ansible.builtin.shell: command -v apt-get
+      args:
+        executable: /bin/bash
+      register: apt_get_command
+      changed_when: false
+      failed_when: false
+
+    - name: Select supported package manager
+      ansible.builtin.set_fact:
+        homelab_package_manager: >-
+          {{ 'dnf' if dnf_command.rc == 0 else 'apt-get' if apt_get_command.rc == 0 else '' }}
+
+    - name: Report skipped package installation when no supported package manager is available
+      ansible.builtin.debug:
+        msg: "Neither dnf nor apt-get is available; skipping package install."
+      when: homelab_package_manager == ''
+
+    - name: Install homelab packages with dnf
+      ansible.builtin.dnf:
+        name: "{{ base_packages }}"
+        state: present
+      become: true
+      when: homelab_package_manager == 'dnf'
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+      become: true
+      when: homelab_package_manager == 'apt-get'
+
+    - name: Install homelab packages with apt-get
+      ansible.builtin.apt:
+        name: "{{ base_packages }}"
+        state: present
+      become: true
+      when: homelab_package_manager == 'apt-get'
+
+    - name: Check whether chezmoi is available
+      ansible.builtin.shell: |
+        PATH="{{ local_bin_dir }}:$PATH"
+        command -v chezmoi
+      args:
+        executable: /bin/bash
+      register: chezmoi_command
+      changed_when: false
+      failed_when: false
+
+    - name: Ensure local bin directory exists
+      ansible.builtin.file:
+        path: "{{ local_bin_dir }}"
+        state: directory
+        mode: "0755"
+      when: chezmoi_command.rc != 0
+
+    - name: Install chezmoi
+      ansible.builtin.shell: |
+        set -euo pipefail
+        curl -fsLS get.chezmoi.io | sh -s -- -b "{{ local_bin_dir }}"
+      args:
+        executable: /bin/bash
+        creates: "{{ chezmoi_bin }}"
+      when: chezmoi_command.rc != 0
+
+    - name: Initialize chezmoi source
+      ansible.builtin.command:
+        argv:
+          - "{{ chezmoi_bin if chezmoi_command.rc != 0 else chezmoi_command.stdout }}"
+          - init
+          - "--source={{ chezmoi_source }}"
+      environment:
+        PATH: "{{ local_bin_dir }}:{{ ansible_env.PATH }}"
+      changed_when: false
+
+    - name: Apply dotfiles with chezmoi
+      ansible.builtin.command:
+        argv:
+          - "{{ chezmoi_bin if chezmoi_command.rc != 0 else chezmoi_command.stdout }}"
+          - apply
+      environment:
+        PATH: "{{ local_bin_dir }}:{{ ansible_env.PATH }}"
+      changed_when: false
+
+    - name: Check whether homelab .env exists
+      ansible.builtin.stat:
+        path: "{{ homelab_env_file }}"
+      register: homelab_env
+
+    - name: Preserve secure permissions on existing homelab .env
+      ansible.builtin.file:
+        path: "{{ homelab_env_file }}"
+        mode: "0600"
+      when: homelab_env.stat.exists
+
+    - name: Detect homelab server IP
+      ansible.builtin.shell: |
+        ip -4 route get 1.1.1.1 2>/dev/null | tr ' ' '\n' | awk 'prev == "src" { print; exit } { prev = $0 }'
+      args:
+        executable: /bin/bash
+      register: detected_homelab_ip
+      changed_when: false
+      failed_when: false
+      when: not homelab_env.stat.exists
+
+    - name: Detect router/gateway IP
+      ansible.builtin.shell: |
+        ip -4 route show default 2>/dev/null | awk '{ print $3; exit }'
+      args:
+        executable: /bin/bash
+      register: detected_homelab_gateway
+      changed_when: false
+      failed_when: false
+      when: not homelab_env.stat.exists
+
+    - name: Prompt for homelab server IP when detection fails
+      ansible.builtin.pause:
+        prompt: "Homelab server IP"
+      register: prompted_homelab_ip
+      when:
+        - not homelab_env.stat.exists
+        - detected_homelab_ip.stdout | default('') | length == 0
+
+    - name: Prompt for router/gateway IP when detection fails
+      ansible.builtin.pause:
+        prompt: "Router/gateway IP"
+      register: prompted_homelab_gateway
+      when:
+        - not homelab_env.stat.exists
+        - detected_homelab_gateway.stdout | default('') | length == 0
+
+    - name: Prompt for Pi-hole admin password
+      ansible.builtin.pause:
+        prompt: "Pi-hole admin password"
+        echo: false
+      register: prompted_pihole_password
+      no_log: true
+      when: not homelab_env.stat.exists
+
+    - name: Build generated homelab environment values
+      ansible.builtin.set_fact:
+        generated_homelab_ip: "{{ detected_homelab_ip.stdout | default(prompted_homelab_ip.user_input | default(''), true) }}"
+        generated_homelab_gateway: "{{ detected_homelab_gateway.stdout | default(prompted_homelab_gateway.user_input | default(''), true) }}"
+      when: not homelab_env.stat.exists
+
+    - name: Create homelab .env
+      ansible.builtin.copy:
+        dest: "{{ homelab_env_file }}"
+        mode: "0600"
+        content: |
+          PIHOLE_PASSWORD={{ prompted_pihole_password.user_input }}
+          DHCP_ACTIVE=true
+          DHCP_START={{ generated_homelab_ip.split('.')[0:3] | join('.') }}.100
+          DHCP_END={{ generated_homelab_ip.split('.')[0:3] | join('.') }}.200
+          DHCP_ROUTER={{ generated_homelab_gateway }}
+          DHCP_LEASE_TIME=24h
+          PIHOLE_DOMAIN=home
+          HOMELAB_IP={{ generated_homelab_ip }}
+          HOMELAB_DOMAIN=home
+          HOMELAB_DNS_NAMES=pihole,glance
+      no_log: true
+      when: not homelab_env.stat.exists
+
+    - name: Start homelab services
+      ansible.builtin.command:
+        argv:
+          - "{{ homelab_dir }}/scripts/homelab.sh"
+          - start
+      environment:
+        PATH: "{{ local_bin_dir }}:{{ ansible_env.PATH }}"
+      changed_when: true
+
+    - name: Apply homelab nginx configuration
+      ansible.builtin.command:
+        argv:
+          - "{{ homelab_dir }}/scripts/homelab.sh"
+          - nginx
+      environment:
+        PATH: "{{ local_bin_dir }}:{{ ansible_env.PATH }}"
+      changed_when: true
+
+    - name: Read generated homelab IP for verification message
+      ansible.builtin.shell: |
+        awk -F= '$1 == "HOMELAB_IP" { print substr($0, index($0, "=") + 1); exit }' "{{ homelab_env_file }}"
+      args:
+        executable: /bin/bash
+      register: verification_homelab_ip
+      changed_when: false
+
+    - name: Show completion message
+      ansible.builtin.debug:
+        msg:
+          - "Homelab server install complete."
+          - "Verify: nslookup glance.home {{ verification_homelab_ip.stdout }}"
