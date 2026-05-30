@@ -1,0 +1,18 @@
+---
+- name: Test nginx configuration
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  listen: nginx configuration changed
+
+- name: Enable nginx
+  ansible.builtin.service:
+    name: nginx
+    enabled: true
+    state: started
+  listen: nginx configuration changed
+
+- name: Reload nginx
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
+  listen: nginx configuration changed
