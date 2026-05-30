@@ -6,7 +6,7 @@ Local homelab services live here. Keep this separate from chezmoi-managed dotfil
 
 - `apps/`: Podman Compose app definitions.
 - `services/`: host service config managed from this repo.
-- `scripts/`: install, dispatcher, lifecycle wrappers, and shared libraries.
+- `scripts/`: thin shell entry points for the Ansible installer and lifecycle dispatcher.
 - `ansible/`: lifecycle playbook and roles used by the dispatcher for container start/stop/status operations.
 
 ## Runtime Model
@@ -22,35 +22,33 @@ Fresh server install after cloning or installing this repo:
 ~/Dotfiles/homelab/scripts/install-server.sh
 ```
 
-Manage the stack with the main dispatcher. The lifecycle commands call `ansible/playbooks/homelab.yml` locally and pass the requested action into the `homelab_lifecycle` role:
+Manage the stack with the main dispatcher. The lifecycle commands call `ansible/homelab.yml` locally and pass the requested action into the `homelab_lifecycle` role:
 
 ```bash
 ~/Dotfiles/homelab/scripts/homelab.sh start
 ~/Dotfiles/homelab/scripts/homelab.sh stop
 ~/Dotfiles/homelab/scripts/homelab.sh restart
 ~/Dotfiles/homelab/scripts/homelab.sh status
-~/Dotfiles/homelab/scripts/homelab.sh doctor
+~/Dotfiles/homelab/scripts/homelab.sh nginx
 ```
 
-Ansible users can run the homelab playbook, which performs the same preflight validations before starting containers or applying nginx configuration:
+Ansible users can run the same local lifecycle playbook used by the dispatcher:
 
 ```bash
-ansible-playbook -i <inventory> ~/Dotfiles/homelab/playbook.yml
+ansible-playbook ~/Dotfiles/homelab/ansible/homelab.yml \
+  --extra-vars homelab_action=start
 ```
 
-The older lifecycle commands are wrappers around the dispatcher:
+Host nginx configuration lives in its own site playbook:
 
 ```bash
-./scripts/start-all.sh
-./scripts/stop-all.sh
-./scripts/restart-all.sh
-./scripts/status.sh
+ansible-playbook -i localhost, ~/Dotfiles/homelab/ansible/site.yml
 ```
 
-Start only Pi-hole:
+Start only Pi-hole through the dispatcher:
 
 ```bash
-./scripts/start-pihole-rootful.sh
+~/Dotfiles/homelab/scripts/homelab.sh pihole
 ```
 
 Pi-hole requires `homelab/.env` with `PIHOLE_PASSWORD` set. Keep that file private; scripts tighten it to mode `600` when they read or generate it.
@@ -73,7 +71,7 @@ HOMELAB_APPS=glance,open-webui
 
 In this mode, `homelab.sh start` requires the `tailscale` command, verifies `tailscale status`, detects the server IPv4 with `tailscale ip -4`, and fails clearly if no Tailscale IP is available.
 
-Pi-hole is skipped by the normal start path, and rootless app containers bind to localhost only. The nginx command renders reverse-proxy configs so nginx listens on `<tailscale-ip>:80` instead of all LAN interfaces.
+Pi-hole is skipped by the normal start path, and rootless app containers bind to localhost only. The `homelab.sh nginx` command renders reverse-proxy configs so nginx listens on `<tailscale-ip>:80` instead of all LAN interfaces.
 
 Every client device that should reach the homelab must be joined to the same tailnet. Access examples:
 

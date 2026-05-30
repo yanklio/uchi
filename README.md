@@ -75,7 +75,7 @@ Run repository checks:
 
 ## Homelab
 
-Homelab files are intentionally outside the chezmoi source. Install a fresh server with:
+Homelab files are intentionally outside the chezmoi source. Install a fresh server with the thin shell wrapper around the Ansible installer:
 
 ```bash
 ~/Dotfiles/homelab/scripts/install-server.sh

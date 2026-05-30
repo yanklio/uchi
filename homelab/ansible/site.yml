@@ -1,6 +1,8 @@
 ---
 - name: Configure homelab host services
-  hosts: homelab
+  hosts: localhost
+  connection: local
+  gather_facts: false
   become: true
   roles:
-    - role: nginx
+    - role: roles/nginx

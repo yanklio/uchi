@@ -1,9 +1,12 @@
 ---
-# Directory containing the source nginx conf.d files in this repository.
-homelab_nginx_source_dir: "{{ role_path }}/../../../services/nginx/conf.d"
+# Directory containing this repository's homelab tree.
+homelab_dir: "{{ role_path }}/../../.."
 
-# Match the Python homelab tooling default: LAN mode unless explicitly set.
-homelab_access_mode: "{{ lookup('ansible.builtin.env', 'HOMELAB_ACCESS_MODE') | default('lan', true) }}"
+# Optional .env file used to discover HOMELAB_ACCESS_MODE for local nginx runs.
+homelab_env_file: "{{ homelab_dir }}/.env"
+
+# Directory containing the source nginx conf.d files in this repository.
+homelab_nginx_source_dir: "{{ homelab_dir }}/services/nginx/conf.d"
 
 # Optional override for tests or hosts where `tailscale ip -4` is not available to Ansible.
 homelab_tailscale_ipv4: ""

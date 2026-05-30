@@ -20,8 +20,8 @@
 
 ## Homelab
 - The fresh-server installer is `homelab/scripts/install-server.sh`.
-- Homelab lifecycle goes through `homelab/scripts/homelab.sh`; the older lifecycle scripts are wrappers.
-- Keep homelab implementation in focused Python modules under `homelab/scripts/lib/` when it would otherwise become hard to read.
+- Homelab lifecycle goes through `homelab/scripts/homelab.sh`, which dispatches to Ansible playbooks and roles.
+- Keep homelab implementation in focused Ansible roles under `homelab/ansible/roles/` when it would otherwise become hard to read.
 - Homelab runtime state and secrets are ignored by `homelab/.gitignore`.
 
 ## Verification
