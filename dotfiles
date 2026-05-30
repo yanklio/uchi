@@ -8,27 +8,20 @@ if [[ -z "${1:-}" || "${1:-}" == "help" || "${1:-}" == "-h" || "${1:-}" == "--he
   echo "Usage: $0 [command]"
   echo ""
   echo "Commands:"
-  echo "  bootstrap    Run workstation bootstrap playbook"
-  echo "  homelab      Run homelab lifecycle playbook"
-  echo "  server       Install homelab server dependencies and initialize"
+  echo "  workstation  Run workstation setup"
+  echo "  server       Run server setup"
+  echo "  containers   Manage homelab containers"
+  echo "  check        Run repository checks"
   echo "  help         Show this help"
   exit 0 2>/dev/null || exit 0
 fi
 
-if ! command -v ansible-playbook >/dev/null 2>&1; then
-  echo "ansible-playbook is required. Please install Ansible." >&2
-  exit 1 2>/dev/null || exit 1
-fi
-
 case "$1" in
-  bootstrap)
-    ansible-playbook "${DOTFILES_DIR}/ansible/workstation.yml"
+  workstation | server | check)
+    "${DOTFILES_DIR}/scripts/$1.sh" "${@:2}"
     ;;
-  homelab)
-    ansible-playbook "${DOTFILES_DIR}/ansible/homelab.yml"
-    ;;
-  server)
-    ansible-playbook "${DOTFILES_DIR}/ansible/server-install.yml"
+  containers)
+    "${DOTFILES_DIR}/scripts/containers.sh" "${@:2}"
     ;;
   *)
     echo "Unknown command: $1" >&2

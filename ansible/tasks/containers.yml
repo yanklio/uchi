@@ -1,0 +1,22 @@
+---
+- name: Start homelab containers
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh start"
+  tags: [never, start-containers]
+
+- name: Stop homelab containers
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh stop"
+  tags: [never, stop-containers]
+
+- name: Restart homelab containers
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh restart"
+  tags: [never, restart-containers]
+
+- name: Show homelab container status
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh status"
+  changed_when: false
+  tags: [never, status]
+
+- name: Run homelab doctor
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh doctor"
+  changed_when: false
+  tags: [never, doctor]

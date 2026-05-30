@@ -1,0 +1,70 @@
+---
+dotfiles_source_dir: "{{ playbook_dir }}/.."
+dotfiles_repo_dir: "{{ ansible_env.HOME }}/Dotfiles"
+dotfiles_home_dir: "{{ dotfiles_source_dir }}/home"
+homelab_dir: "{{ dotfiles_repo_dir }}/homelab"
+homelab_env_file: "{{ homelab_dir }}/.env"
+
+common_packages:
+  - git
+  - curl
+  - ca-certificates
+  - zsh
+  - vim
+  - neovim
+  - tmux
+  - fzf
+  - ripgrep
+
+workstation_packages:
+  - bat
+  - btop
+  - eza
+  - fd-find
+  - flatpak
+  - gh
+  - htop
+  - podman
+  - zoxide
+  - zsh-autosuggestions
+  - zsh-syntax-highlighting
+
+server_packages:
+  - git
+  - curl
+  - ca-certificates
+  - podman
+  - nginx
+  - tailscale
+  - python3
+
+homelab_access_mode: tailscale-only
+homelab_app_bind: 127.0.0.1
+homelab_apps: glance,open-webui
+homelab_domain: home
+homelab_tailnet_dns_suffix: gmk-de
+homelab_tailnet_dns_names: glance,chat
+homelab_enable_pihole_dns: false
+
+pihole_password: change_me_to_a_strong_password
+pihole_domain: home
+dhcp_active: false
+dhcp_start: 192.168.1.100
+dhcp_end: 192.168.1.200
+dhcp_router: 192.168.1.1
+dhcp_lease_time: 24h
+
+container_images:
+  pihole: docker.io/pihole/pihole:2025.05.1
+  glance: docker.io/glanceapp/glance:v0.8.4
+  open_webui: ghcr.io/open-webui/open-webui:v0.6.10
+
+homelab_app_files:
+  - src: apps/pi-hole/docker-compose.yml
+    dest: apps/pi-hole/docker-compose.yml
+  - src: apps/glance/docker-compose.yml
+    dest: apps/glance/docker-compose.yml
+  - src: apps/glance/glance.yml
+    dest: apps/glance/glance.yml
+  - src: apps/open-webui/docker-compose.yml
+    dest: apps/open-webui/docker-compose.yml

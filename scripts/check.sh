@@ -10,14 +10,42 @@ have() {
 check_shell() {
   echo "Checking shell syntax..."
   bash -n "$root"/scripts/*.sh
-  bash -n "$root"/dotfiles
+  bash -n "$root"/homelab/scripts/*.sh
+  [[ ! -f "$root/dotfiles" ]] || bash -n "$root/dotfiles"
 }
 
-check_homelab_compose() {
+check_python() {
+  echo "Checking Python syntax..."
+  python3 -m py_compile "$root"/homelab/scripts/*.py
+}
+
+check_yaml() {
+  have yamllint || return 0
+  echo "Checking YAML..."
+  yamllint "$root/ansible" "$root/homelab/apps"
+}
+
+check_ansible() {
+  have ansible-playbook || {
+    echo "ansible-playbook is not installed; skipping syntax check."
+    return 0
+  }
+
+  echo "Checking Ansible syntax..."
+  ansible-playbook -i "$root/ansible/hosts.yml" "$root/ansible/site.yml" --syntax-check
+}
+
+check_ansible_lint() {
+  have ansible-lint || return 0
+  echo "Checking Ansible lint..."
+  ansible-lint "$root/ansible/site.yml"
+}
+
+check_compose() {
   have podman || return 0
   podman compose version >/dev/null 2>&1 || return 0
 
-  echo "Checking homelab compose files..."
+  echo "Checking compose files..."
   local compose_file app_dir env_arg=()
   [[ -f "$root/homelab/.env.example" ]] && env_arg=(--env-file "$root/homelab/.env.example")
 
@@ -28,48 +56,13 @@ check_homelab_compose() {
   done
 }
 
-check_chezmoi_templates() {
-  have chezmoi || {
-    echo "chezmoi is not installed; skipping template checks."
-    return 0
-  }
-
-  echo "Checking chezmoi templates..."
-  chezmoi --source="$root/chezmoi" execute-template < "$root/chezmoi/.chezmoi.toml.tmpl" >/dev/null
-}
-
-check_chezmoi_diff() {
-  have chezmoi || return 0
-
-  echo "Previewing chezmoi diff..."
-  chezmoi --source="$root/chezmoi" diff --exclude=scripts >/dev/null
-}
-
-check_ansible() {
-  have ansible-playbook || {
-    echo "ansible-playbook is not installed; skipping playbook syntax checks."
-    return 0
-  }
-
-  echo "Checking Ansible playbooks..."
-  ansible-playbook --syntax-check "$root/ansible/server-install.yml"
-  ansible-playbook --syntax-check "$root/ansible/homelab.yml"
-  ansible-playbook --syntax-check -i localhost, "$root/ansible/nginx.yml"
-}
-
-check_ignored_runtime_state() {
-  echo "Checking homelab ignore rules..."
-  git -C "$root" check-ignore -q homelab/.env
-  git -C "$root" check-ignore -q homelab/apps/pi-hole/etc-pihole/pihole.toml
-}
-
 main() {
   check_shell
-  check_chezmoi_templates
-  check_chezmoi_diff
+  check_python
+  check_yaml
   check_ansible
-  check_homelab_compose
-  check_ignored_runtime_state
+  check_ansible_lint
+  check_compose
   echo "Checks passed."
 }
 

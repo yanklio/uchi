@@ -1,0 +1,29 @@
+---
+- name: Common setup
+  hosts: all
+  gather_facts: true
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Run common tasks
+      ansible.builtin.import_tasks: tasks/common.yml
+
+- name: Workstation setup
+  hosts: workstation
+  gather_facts: true
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Run workstation tasks
+      ansible.builtin.import_tasks: tasks/workstation.yml
+
+- name: Server setup
+  hosts: server
+  gather_facts: true
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Run server tasks
+      ansible.builtin.import_tasks: tasks/server.yml
+    - name: Expose container operation tags
+      ansible.builtin.import_tasks: tasks/containers.yml

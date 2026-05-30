@@ -1,0 +1,85 @@
+---
+- name: Install server packages on Fedora
+  ansible.builtin.dnf:
+    name: "{{ server_packages }}"
+    state: present
+  become: true
+  when: ansible_os_family == "RedHat"
+
+- name: Install server packages on Debian
+  ansible.builtin.apt:
+    name: "{{ server_packages }}"
+    state: present
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Create homelab directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ homelab_dir }}"
+    - "{{ homelab_dir }}/scripts"
+    - "{{ homelab_dir }}/apps/pi-hole"
+    - "{{ homelab_dir }}/apps/glance"
+    - "{{ homelab_dir }}/apps/open-webui"
+
+- name: Copy homelab CLI scripts
+  ansible.builtin.copy:
+    src: "{{ dotfiles_source_dir }}/homelab/scripts/"
+    dest: "{{ homelab_dir }}/scripts/"
+    mode: "0755"
+
+- name: Copy homelab app definitions
+  ansible.builtin.copy:
+    src: "{{ dotfiles_source_dir }}/homelab/{{ item.src }}"
+    dest: "{{ homelab_dir }}/{{ item.dest }}"
+    mode: "0644"
+  loop: "{{ homelab_app_files }}"
+
+- name: Create homelab environment
+  ansible.builtin.template:
+    src: homelab.env.j2
+    dest: "{{ homelab_env_file }}"
+    mode: "0600"
+    backup: true
+
+- name: Install nginx homelab config
+  ansible.builtin.template:
+    src: nginx/homelab.conf.j2
+    dest: /etc/nginx/conf.d/homelab.conf
+    mode: "0644"
+    backup: true
+  register: nginx_config
+  become: true
+
+- name: Test nginx config
+  ansible.builtin.command: nginx -t
+  become: true
+  changed_when: false
+
+- name: Enable nginx
+  ansible.builtin.service:
+    name: nginx
+    enabled: true
+    state: started
+  become: true
+
+- name: Reload nginx after config change
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
+  become: true
+  when: nginx_config.changed
+
+- name: Enable podman restart service when available
+  ansible.builtin.systemd:
+    name: podman-restart.service
+    enabled: true
+  become: true
+  failed_when: false
+
+- name: Run homelab doctor
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh doctor"
+  changed_when: false

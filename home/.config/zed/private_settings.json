@@ -69,7 +69,7 @@
   "lsp": {
     "wakatime": {
       "initialization_options": {
-        "api-key": {{ index . "wakatimeApiKey" | default "" | quote }}
+        "api-key": ""
       }
     },
     "ruff": {

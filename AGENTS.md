@@ -1,30 +1,31 @@
 # Agent Notes
 
 ## Repository Shape
+
 - This repository root is `~/Dotfiles`.
-- Chezmoi uses `~/Dotfiles/chezmoi` directly as its source directory.
-- Homelab server/container config lives in `homelab` and is intentionally separate from chezmoi-managed dotfiles.
-- First-run install scripts live in `scripts/`; `scripts/install.sh` installs and applies dotfiles only, with distro-specific wrappers beside it.
-- Do not move the git repository inside the chezmoi source; git should stay at `~/Dotfiles/.git`.
+- Ansible is the main setup system for both workstation and server setup.
+- Dotfiles live in `home/` and are copied into `$HOME` by `ansible/tasks/common.yml`.
+- Homelab server/container config lives in `homelab/`.
+- Keep the repo small: no Ansible roles, Galaxy dependencies, Vault, or enterprise-style nesting.
 
-## Chezmoi Source
-- The actual chezmoi source tree is `chezmoi`.
-- Files in that tree use chezmoi naming rules: `dot_` renders to `.`, and `.tmpl` files are rendered by chezmoi.
-- Keep local agent tooling out of managed dotfiles. `.opencode/` inside the chezmoi source is ignored intentionally.
-- Package inventories live in `chezmoi/scripts/packages/`.
+## Ansible Flow
 
-## Bootstrap Flow
-- `chezmoi apply` should only manage dotfiles.
-- First-run install scripts stop after `chezmoi apply`; run `chezmoi/scripts/bootstrap.sh` explicitly for packages, tools, services, and GNOME settings.
-- Keep `chezmoi/scripts/bootstrap.sh` as a small wrapper and put implementation in focused Python modules under `chezmoi/scripts/lib/`.
+- Main playbook: `ansible/site.yml`.
+- Inventory: `ansible/hosts.yml` with `workstation` and `server` groups.
+- Variables: `ansible/vars.yml`.
+- Task files live in `ansible/tasks/`.
+- Templates live in `ansible/templates/`.
 
 ## Homelab
-- The fresh-server installer is `homelab/scripts/install-server.sh`.
-- Homelab lifecycle goes through `homelab/scripts/homelab.sh`, which dispatches to Ansible playbooks and roles.
-- Keep homelab implementation in focused Ansible roles under `homelab/ansible/roles/` when it would otherwise become hard to read.
-- Homelab runtime state and secrets are ignored by `homelab/.gitignore`.
+
+- Container app definitions live in `homelab/apps/<name>/docker-compose.yml`.
+- Container lifecycle goes through `homelab/scripts/homelab.sh`.
+- Ansible container tags should call the homelab CLI, not duplicate compose logic.
+- Server setup must not auto-start containers.
+- `DHCP_ACTIVE` defaults to `false` and `HOMELAB_ACCESS_MODE` defaults to `tailscale-only`.
 
 ## Verification
+
 - Run all repository checks with: `scripts/check.sh`.
-- If diagnosing manually, check shell syntax with: `bash -n scripts/*.sh homelab/scripts/*.sh chezmoi/scripts/bootstrap.sh`.
-- Preview chezmoi changes from the source tree with: `chezmoi --source="$HOME/Dotfiles/chezmoi" diff --exclude=scripts`.
+- If diagnosing manually, check shell syntax with: `bash -n scripts/*.sh homelab/scripts/*.sh`.
+- Check Ansible syntax with: `ansible-playbook -i ansible/hosts.yml ansible/site.yml --syntax-check`.
