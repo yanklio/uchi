@@ -1,0 +1,136 @@
+---
+# Pi-hole post-start configuration kept in sync with homelab/scripts/lib/pihole.py.
+# These tasks intentionally read the same environment variables and build JSON
+# values with Ansible's to_json filter before passing them as a single argv item.
+
+- name: Capture homelab Pi-hole post-start environment
+  ansible.builtin.set_fact:
+    homelab_env_unset: __HOMELAB_ENV_UNSET__
+    homelab_access_mode_raw: "{{ lookup('ansible.builtin.env', 'HOMELAB_ACCESS_MODE', default='__HOMELAB_ENV_UNSET__') }}"
+    homelab_ip_raw: "{{ lookup('ansible.builtin.env', 'HOMELAB_IP', default='__HOMELAB_ENV_UNSET__') }}"
+    homelab_domain_raw: "{{ lookup('ansible.builtin.env', 'HOMELAB_DOMAIN', default='__HOMELAB_ENV_UNSET__') }}"
+    pihole_domain_raw: "{{ lookup('ansible.builtin.env', 'PIHOLE_DOMAIN', default='__HOMELAB_ENV_UNSET__') }}"
+    homelab_dns_names_raw: "{{ lookup('ansible.builtin.env', 'HOMELAB_DNS_NAMES', default='__HOMELAB_ENV_UNSET__') }}"
+    homelab_tailnet_dns_suffix_raw: "{{ lookup('ansible.builtin.env', 'HOMELAB_TAILNET_DNS_SUFFIX', default='__HOMELAB_ENV_UNSET__') }}"
+    homelab_tailnet_dns_names_raw: "{{ lookup('ansible.builtin.env', 'HOMELAB_TAILNET_DNS_NAMES', default='__HOMELAB_ENV_UNSET__') }}"
+    homelab_apps_raw: "{{ lookup('ansible.builtin.env', 'HOMELAB_APPS', default='__HOMELAB_ENV_UNSET__') }}"
+    dhcp_active_raw: "{{ lookup('ansible.builtin.env', 'DHCP_ACTIVE', default='__HOMELAB_ENV_UNSET__') }}"
+
+- name: Apply Python-equivalent Pi-hole environment defaults
+  ansible.builtin.set_fact:
+    homelab_access_mode: "{{ 'lan' if homelab_access_mode_raw == homelab_env_unset else homelab_access_mode_raw }}"
+    homelab_ip: "{{ '' if homelab_ip_raw == homelab_env_unset else homelab_ip_raw }}"
+    homelab_domain: "{{ '' if homelab_domain_raw == homelab_env_unset else homelab_domain_raw }}"
+    pihole_domain: "{{ 'home' if pihole_domain_raw == homelab_env_unset else pihole_domain_raw }}"
+    homelab_dns_names: "{{ 'pihole,glance' if homelab_dns_names_raw == homelab_env_unset else homelab_dns_names_raw }}"
+    homelab_tailnet_dns_suffix: "{{ '' if homelab_tailnet_dns_suffix_raw == homelab_env_unset else homelab_tailnet_dns_suffix_raw }}"
+    homelab_tailnet_dns_names: "{{ '' if homelab_tailnet_dns_names_raw == homelab_env_unset else homelab_tailnet_dns_names_raw }}"
+    homelab_apps: "{{ 'glance' if homelab_apps_raw == homelab_env_unset else homelab_apps_raw }}"
+    dhcp_active: "{{ 'true' if dhcp_active_raw == homelab_env_unset else dhcp_active_raw }}"
+
+- name: Detect Tailscale IPv4 for Pi-hole local DNS records
+  ansible.builtin.command:
+    argv:
+      - tailscale
+      - ip
+      - -4
+  register: pihole_tailscale_ip_command
+  changed_when: false
+  failed_when: false
+  when: homelab_access_mode == 'tailscale-only'
+
+- name: Detect hostname fallback for tailnet DNS suffix
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - "import socket; print(socket.gethostname().split('.', 1)[0])"
+  register: pihole_hostname_command
+  changed_when: false
+  when: homelab_access_mode == 'tailscale-only' and not homelab_tailnet_dns_suffix
+
+- name: Build Pi-hole local DNS host record inputs
+  ansible.builtin.set_fact:
+    pihole_dns_record_ip: >-
+      {{
+        (
+          pihole_tailscale_ip_command.stdout_lines
+          | default([])
+          | map('trim')
+          | reject('equalto', '')
+          | list
+          | first
+          | default('', true)
+        )
+        if homelab_access_mode == 'tailscale-only'
+        else homelab_ip
+      }}
+    pihole_dns_record_suffix: >-
+      {{
+        (
+          homelab_tailnet_dns_suffix
+          if homelab_tailnet_dns_suffix
+          else (pihole_hostname_command.stdout | default('') | trim)
+        )
+        if homelab_access_mode == 'tailscale-only'
+        else (homelab_domain if homelab_domain else pihole_domain)
+      }}
+    pihole_dns_record_names_raw: >-
+      {{
+        (
+          homelab_tailnet_dns_names
+          if homelab_tailnet_dns_names
+          else homelab_apps
+        )
+        if homelab_access_mode == 'tailscale-only'
+        else homelab_dns_names
+      }}
+
+- name: Build Pi-hole local DNS host records
+  ansible.builtin.set_fact:
+    pihole_dns_hosts: >-
+      {{
+        (pihole_dns_record_names_raw | regex_replace(',', ' ')).split()
+        | map('regex_replace', '^(.*)$', pihole_dns_record_ip ~ ' \\1.' ~ pihole_dns_record_suffix)
+        | list
+      }}
+
+- name: Require an IP for Pi-hole local DNS records
+  ansible.builtin.fail:
+    msg: No IP available for Pi-hole local DNS records
+  when: not pihole_dns_record_ip
+
+- name: Configure Pi-hole local DNS records
+  become: true
+  ansible.builtin.command:
+    argv:
+      - podman
+      - exec
+      - pihole
+      - pihole-FTL
+      - --config
+      - dns.hosts
+      - "{{ pihole_dns_hosts | to_json }}"
+
+- name: Build Pi-hole DHCP DNS option
+  ansible.builtin.set_fact:
+    pihole_dhcp_dnsmasq_lines:
+      - "dhcp-option=option:dns-server,{{ homelab_ip }}"
+  when:
+    - homelab_access_mode != 'tailscale-only'
+    - dhcp_active in ['1', 'true', 'yes', 'on']
+
+- name: Configure Pi-hole DHCP DNS option
+  become: true
+  ansible.builtin.command:
+    argv:
+      - podman
+      - exec
+      - pihole
+      - pihole-FTL
+      - --config
+      - misc.dnsmasq_lines
+      - "{{ pihole_dhcp_dnsmasq_lines | to_json }}"
+  when:
+    - homelab_access_mode != 'tailscale-only'
+    - dhcp_active in ['1', 'true', 'yes', 'on']
