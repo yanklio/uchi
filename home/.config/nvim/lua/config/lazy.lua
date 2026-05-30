@@ -15,6 +15,7 @@ require("lazy").setup({
   { "ellisonleao/gruvbox.nvim", lazy = false },
   {
     "nvim-treesitter/nvim-treesitter",
+    tag = "v0.9.3",
     build = ":TSUpdate",
     config = function()
       vim.api.nvim_create_autocmd("FileType", {
