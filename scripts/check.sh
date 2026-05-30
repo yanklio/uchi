@@ -11,9 +11,12 @@ check_shell() {
   echo "Checking shell syntax..."
   bash -n "$root"/scripts/*.sh
   bash -n "$root"/homelab/scripts/*.sh
-  bash -n "$root"/homelab/scripts/lib/*.sh
   bash -n "$root/chezmoi/scripts/bootstrap.sh"
-  bash -n "$root"/chezmoi/scripts/lib/*.sh
+}
+
+check_python() {
+  echo "Checking Python syntax..."
+  python3 -c 'import pathlib, sys; [compile(path.read_text(), str(path), "exec") for base in sys.argv[1:] for path in pathlib.Path(base).rglob("*.py")]' "$root/homelab/scripts" "$root/chezmoi/scripts"
 }
 
 check_homelab_compose() {
@@ -56,6 +59,7 @@ check_ignored_runtime_state() {
 
 main() {
   check_shell
+  check_python
   check_chezmoi_templates
   check_chezmoi_diff
   check_homelab_compose

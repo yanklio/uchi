@@ -8,7 +8,7 @@ Personal workstation and homelab configuration.
 - `homelab/`: container apps and host service config for the homelab server.
 - `scripts/`: first-run install scripts that install base dependencies, clone this repo, and hand off to chezmoi.
 
-## First Run
+## Dotfiles Install
 
 Auto-detect Fedora, Debian, or Ubuntu:
 
@@ -39,10 +39,16 @@ curl -fsSL https://raw.githubusercontent.com/yanklio/dotfiles/main/scripts/insta
 Pass installer flags after the downloaded script:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yanklio/dotfiles/main/scripts/install.sh | bash -s -- --server --no-gnome
+curl -fsSL https://raw.githubusercontent.com/yanklio/dotfiles/main/scripts/install.sh | bash -s -- --dir "$HOME/src/Dotfiles"
 ```
 
-Supported flags are `--server`, `--client`, `--gnome`, `--no-gnome`, `--repo URL`, `--dir PATH`, and `--distro NAME`.
+Supported flags are `--repo URL`, `--dir PATH`, `--distro NAME`, `--fedora`, `--debian`, and `--ubuntu`.
+
+The dotfiles installer intentionally stops after `chezmoi apply`. Run workstation bootstrap explicitly when packages, tools, services, Flatpaks, or GNOME settings are needed:
+
+```bash
+~/Dotfiles/chezmoi/scripts/bootstrap.sh
+```
 
 ## Dotfiles
 
@@ -59,7 +65,7 @@ Preview changes before applying:
 chezmoi --source="$HOME/Dotfiles/chezmoi" diff --exclude=scripts
 ```
 
-Dotfiles are applied with chezmoi. Packages, tools, services, and GNOME settings are handled explicitly by `chezmoi/scripts/bootstrap.sh`; the first-run installer calls it after `chezmoi apply`.
+Dotfiles are applied with chezmoi. Packages, tools, services, and GNOME settings are handled explicitly by `chezmoi/scripts/bootstrap.sh`.
 
 Run repository checks:
 

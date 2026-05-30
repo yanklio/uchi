@@ -15,7 +15,7 @@ Local homelab services live here. Keep this separate from chezmoi-managed dotfil
 - `HOMELAB_ACCESS_MODE=lan` is the default and keeps the existing LAN-oriented behavior.
 - `HOMELAB_ACCESS_MODE=tailscale-only` exposes apps only through the server's Tailscale address.
 
-Fresh server install after cloning this repo:
+Fresh server install after cloning or installing this repo:
 
 ```bash
 ~/Dotfiles/homelab/scripts/install-server.sh

@@ -21,15 +21,13 @@ Non-secret defaults live in `.chezmoidata.toml`. Override Git identity and optio
 
 [data]
   wakatimeApiKey = "your-api-key-here"
-  machineRole = "client"
-  gnomeSettings = "auto"
 ```
 
 `dot_gitconfig.tmpl` reads `data.git.*`.
 
 `dot_config/zed/private_settings.json.tmpl` reads `data.wakatimeApiKey`.
 
-`scripts/bootstrap.sh` reads `data.machineRole` and `data.gnomeSettings` through first-run installer environment exports or `~/.config/chezmoi/chezmoi.toml` defaults.
+`scripts/bootstrap.sh` reads `DOTFILES_GNOME_SETTINGS` from the environment. If unset, it auto-detects GNOME.
 
 ## Package Setup
 
@@ -49,11 +47,11 @@ Run selected sections when you do not need the full bootstrap:
 ./scripts/bootstrap.sh packages npm flatpak gnome
 ```
 
-On a fresh Linux machine, the first-run installer runs `scripts/bootstrap.sh` explicitly after `chezmoi apply`.
+On a fresh Linux machine, the first-run installer stops after `chezmoi apply`. Run `scripts/bootstrap.sh` explicitly when package setup is needed.
 
 `chezmoi apply` only manages dotfiles. Run `scripts/bootstrap.sh` manually when package lists, tools, services, or GNOME settings change.
 
-The bootstrap script is a small dispatcher over `scripts/lib/*.sh`, detects available tools directly, and supports `DOTFILES_DRY_RUN=1`.
+The bootstrap shell script is a small wrapper around readable Python modules in `scripts/lib/`, detects available tools directly, and supports `DOTFILES_DRY_RUN=1`.
 
 Package lists live in:
 
@@ -63,7 +61,7 @@ Package lists live in:
 - `scripts/packages/flatpak.txt`
 - `scripts/packages/upstream.txt`
 
-`system.txt` uses `package|roles|package-managers`, where roles are `core`, `dev`, `desktop`, or `server`, and package managers are `all`, `dnf`, or `apt`.
+`system.txt` uses `package|roles|package-managers`, where roles are `core`, `dev`, or `desktop`, and package managers are `all`, `dnf`, or `apt`.
 
 Repository-only files such as `README.md`, `AGENTS.md`, `docs/`, and `scripts/` are excluded from chezmoi apply by `.chezmoiignore`.
 
