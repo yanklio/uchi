@@ -31,6 +31,12 @@ Manage the stack with the main dispatcher:
 ~/Dotfiles/homelab/scripts/homelab.sh doctor
 ```
 
+Ansible users can run the homelab playbook, which performs the same preflight validations before starting containers or applying nginx configuration:
+
+```bash
+ansible-playbook -i <inventory> ~/Dotfiles/homelab/playbook.yml
+```
+
 The older lifecycle commands are wrappers around the dispatcher:
 
 ```bash

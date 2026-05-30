@@ -51,6 +51,16 @@ check_chezmoi_diff() {
   chezmoi --source="$root/chezmoi" diff --exclude=scripts >/dev/null
 }
 
+check_ansible() {
+  have ansible-playbook || {
+    echo "ansible-playbook is not installed; skipping playbook syntax checks."
+    return 0
+  }
+
+  echo "Checking Ansible playbooks..."
+  ansible-playbook --syntax-check -i localhost, "$root/homelab/playbook.yml"
+}
+
 check_ignored_runtime_state() {
   echo "Checking homelab ignore rules..."
   git -C "$root" check-ignore -q homelab/.env
@@ -62,6 +72,7 @@ main() {
   check_python
   check_chezmoi_templates
   check_chezmoi_diff
+  check_ansible
   check_homelab_compose
   check_ignored_runtime_state
   echo "Checks passed."
