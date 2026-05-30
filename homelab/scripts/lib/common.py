@@ -73,19 +73,6 @@ def as_root(
     die("sudo is required")
 
 
-def can_run_as_root_noninteractive() -> bool:
-    if os.geteuid() == 0:
-        return True
-    if not have("sudo"):
-        return False
-    return (
-        subprocess.run(
-            ["sudo", "-n", "true"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        ).returncode
-        == 0
-    )
-
-
 def require(command: str) -> None:
     if not have(command):
         die(f"{command} is required")

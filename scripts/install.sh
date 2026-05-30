@@ -53,23 +53,15 @@ parse_args() {
         distro="$2"
         shift
         ;;
-      --distro=*) distro="${1#*=}" ;;
       --repo)
         [[ $# -ge 2 ]] || { echo "--repo requires a value" >&2; exit 2; }
         dotfiles_repo="$2"
         shift
         ;;
-      --repo=*) dotfiles_repo="${1#*=}" ;;
       --dir)
         [[ $# -ge 2 ]] || { echo "--dir requires a value" >&2; exit 2; }
         dotfiles_dir="$2"
         shift
-        ;;
-      --dir=*) dotfiles_dir="${1#*=}" ;;
-      --server | --client | --workstation | --gnome | --no-gnome)
-        echo "$1 is no longer handled by the dotfiles installer." >&2
-        echo "Run chezmoi/scripts/bootstrap.sh for workstation setup or homelab/scripts/install-server.sh for server setup." >&2
-        exit 2
         ;;
       -h | --help) usage; exit 0 ;;
       *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;

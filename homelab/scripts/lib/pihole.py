@@ -13,7 +13,6 @@ from .common import (
     have,
     require_podman_compose,
     run,
-    run_capture,
     truthy,
     warn,
 )
@@ -32,12 +31,8 @@ def should_start_pihole() -> bool:
 def pihole_dns_hosts() -> list[str]:
     if tailscale_only_mode():
         ip = tailscale_ipv4()
-        suffix = (
-            os.environ.get("HOMELAB_TAILNET_DNS_SUFFIX") or socket.gethostname().split(".", 1)[0]
-        )
-        names = os.environ.get("HOMELAB_TAILNET_DNS_NAMES") or os.environ.get(
-            "HOMELAB_APPS", "glance"
-        )
+        suffix = os.environ.get("HOMELAB_TAILNET_DNS_SUFFIX", socket.gethostname().split(".", 1)[0])
+        names = os.environ.get("HOMELAB_TAILNET_DNS_NAMES") or os.environ.get("HOMELAB_APPS", "glance")
     else:
         ip = os.environ.get("HOMELAB_IP", "")
         suffix = os.environ.get("HOMELAB_DOMAIN") or os.environ.get("PIHOLE_DOMAIN", "home")
@@ -45,12 +40,6 @@ def pihole_dns_hosts() -> list[str]:
     if not ip:
         die("No IP available for Pi-hole local DNS records")
     return [f"{ip} {name}.{suffix}" for name in csv_values(names)]
-
-
-def pihole_dns_listening() -> bool:
-    if not have("ss"):
-        return True
-    return any(":53 " in line for line in run_capture(["ss", "-lun"]).splitlines())
 
 
 def start_optional_pihole() -> None:
@@ -130,10 +119,6 @@ def start_pihole() -> None:
     configure_pihole_dns()
     configure_pihole_dhcp()
     enable_podman_restart()
-
-    if pihole_dns_enabled() and not pihole_dns_listening():
-        die("Pi-hole DNS is enabled, but nothing is listening on UDP port 53.")
-
     print("Pi-hole rootful container started.")
 
 

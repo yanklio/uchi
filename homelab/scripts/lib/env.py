@@ -1,6 +1,6 @@
 import os
 
-from .common import APPS_DIR, ENV_FILE, csv_values, die, run, truthy, warn
+from .common import APPS_DIR, ENV_FILE, csv_values, die, run, warn
 from .tailscale import require_tailscale_access, tailscale_only_mode
 
 
@@ -38,28 +38,15 @@ def validate_apps() -> None:
             die(f"Unknown homelab app: {app}")
 
 
-def validate_access_mode() -> None:
-    mode = os.environ.get("HOMELAB_ACCESS_MODE", "lan")
-    if mode not in {"lan", "tailscale-only"}:
-        die(f"Invalid HOMELAB_ACCESS_MODE: {os.environ.get('HOMELAB_ACCESS_MODE', '')}")
-
-
-def validate_tailscale_mode() -> None:
-    if not tailscale_only_mode():
-        return
-
-    if "DHCP_ACTIVE" not in os.environ:
-        die("DHCP_ACTIVE=false must be set when HOMELAB_ACCESS_MODE=tailscale-only")
-    if truthy(os.environ.get("DHCP_ACTIVE")):
-        die("DHCP_ACTIVE=false is required when HOMELAB_ACCESS_MODE=tailscale-only")
-    require_tailscale_access()
-
-
 def validate_env() -> None:
     validate_apps()
-    validate_access_mode()
+
+    mode = os.environ.get("HOMELAB_ACCESS_MODE", "lan")
+    if mode not in {"lan", "tailscale-only"}:
+        die(f"Invalid HOMELAB_ACCESS_MODE: {mode}")
 
     if os.environ.get("PIHOLE_PASSWORD") == "change_me_to_a_strong_password":
         die("PIHOLE_PASSWORD still uses the example value")
 
-    validate_tailscale_mode()
+    if tailscale_only_mode():
+        require_tailscale_access()

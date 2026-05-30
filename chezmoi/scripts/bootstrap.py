@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 
-from lib.common import dry_run, print_post_setup_notes
+from lib.common import dry_run
 from lib.desktop import apply_gnome_settings
 from lib.packages import install_system_packages
 from lib.services import enable_services
@@ -73,7 +73,6 @@ def main() -> int:
             return 2
         SECTIONS[section]()
 
-    print_post_setup_notes()
     print("Bootstrap complete.")
     return 0
 

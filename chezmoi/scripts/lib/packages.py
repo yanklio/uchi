@@ -2,10 +2,10 @@ from .common import PACKAGES_DIR, as_root, detect_package_manager, is_gnome
 
 
 def package_enabled(roles: str, managers: str, package_manager: str) -> bool:
-    selected = {role.strip() for role in roles.split(",")}
-    supported_managers = {manager.strip() for manager in managers.split(",")}
-    role_enabled = bool({"all", "core", "dev"} & selected) or ("desktop" in selected and is_gnome())
-    manager_enabled = "all" in supported_managers or package_manager in supported_managers
+    roles = {role.strip() for role in roles.split(",")}
+    managers = {manager.strip() for manager in managers.split(",")}
+    role_enabled = bool(roles & {"all", "core", "dev"}) or ("desktop" in roles and is_gnome())
+    manager_enabled = "all" in managers or package_manager in managers
     return role_enabled and manager_enabled
 
 
@@ -14,8 +14,11 @@ def collect_packages(package_manager: str) -> list[str]:
     for line in (PACKAGES_DIR / "system.txt").read_text().splitlines():
         if not line.strip() or line.lstrip().startswith("#"):
             continue
-        package, roles, managers = [*line.split("|"), "all", "all"][:3]
-        if package_enabled(roles or "all", managers or "all", package_manager):
+        parts = line.split("|")
+        package = parts[0]
+        roles = parts[1] if len(parts) > 1 and parts[1] else "all"
+        managers = parts[2] if len(parts) > 2 and parts[2] else "all"
+        if package_enabled(roles, managers, package_manager):
             packages.append(package)
     return sorted(set(packages))
 

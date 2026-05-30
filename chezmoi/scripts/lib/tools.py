@@ -2,7 +2,7 @@ import os
 import subprocess
 from pathlib import Path
 
-from .common import PACKAGES_DIR, add_post_setup_note, dry_run, have, read_list, run
+from .common import PACKAGES_DIR, dry_run, have, read_list, run
 
 
 def install_go_tools() -> None:
@@ -42,7 +42,7 @@ def install_extra_cli_tools() -> None:
     if not have("curl"):
         return
     for line in read_list(PACKAGES_DIR / "upstream.txt"):
-        command_name, display_name, install_url = [*line.split("|"), "", ""][:3]
+        command_name, display_name, install_url = line.split("|", 2)
         if not command_name or have(command_name):
             continue
         print(f"Installing {display_name}...")
@@ -51,7 +51,7 @@ def install_extra_cli_tools() -> None:
         else:
             subprocess.run(f"curl -fsSL {install_url} | sh", shell=True, check=True)
         if command_name == "tailscale":
-            add_post_setup_note("Tailscale: run 'sudo tailscale up' to complete setup.")
+            print("Tailscale: run 'sudo tailscale up' to complete setup.")
 
 
 def install_flatpaks() -> None:

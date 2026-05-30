@@ -3,9 +3,9 @@ import os
 import subprocess
 import sys
 
-from .common import ENV_FILE, have, run_capture, warn
+from .common import ENV_FILE, have, warn
 from .env import load_env, validate_env
-from .pihole import pihole_dns_enabled, pihole_dns_hosts, pihole_dns_listening
+from .pihole import pihole_dns_enabled, pihole_dns_hosts
 from .tailscale import show_tailscale_access_urls, tailscale_ipv4, tailscale_only_mode
 
 
@@ -40,14 +40,6 @@ def doctor() -> int:
         print(f"Tailnet DNS: Pi-hole enabled for {json.dumps(pihole_dns_hosts())}")
         if not os.environ.get("PIHOLE_PASSWORD"):
             issues.append("PIHOLE_PASSWORD is required when HOMELAB_ENABLE_PIHOLE_DNS=true")
-        if not pihole_dns_listening():
-            issues.append("Pi-hole DNS is enabled, but UDP port 53 is not listening")
-
-    if tailscale_only_mode() and have("podman"):
-        for line in run_capture(["podman", "ps", "--format", "{{.Names}}\t{{.Ports}}"]).splitlines():
-            name, _, ports = line.partition("\t")
-            if name and any(marker in ports for marker in ["0.0.0.0", ":::", "[::]"]):
-                issues.append(f"{name} exposes ports on all interfaces: {ports}")
 
     if issues:
         for message in issues:

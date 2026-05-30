@@ -4,7 +4,6 @@ from .common import (
     APPS_DIR,
     ENV_FILE,
     as_root,
-    can_run_as_root_noninteractive,
     have,
     require_podman_compose,
     run,
@@ -46,10 +45,10 @@ def show_rootless_containers() -> None:
 
 def show_rootful_containers() -> None:
     print("\nRootful containers:", flush=True)
-    if have("podman") and can_run_as_root_noninteractive():
-        as_root(["podman", "ps", "--format", "table {{.Names}}\t{{.Status}}\t{{.Ports}}"])
+    if not have("podman"):
+        print("podman is not installed")
         return
-    print("sudo root access or podman is not available")
+    as_root(["podman", "ps", "--format", "table {{.Names}}\t{{.Status}}\t{{.Ports}}"], check=False)
 
 
 def show_status() -> None:
