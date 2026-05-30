@@ -1,0 +1,48 @@
+---
+- name: Install workstation packages on Fedora
+  ansible.builtin.dnf:
+    name: "{{ workstation_packages + workstation_fedora_packages }}"
+    state: present
+  become: true
+  when: ansible_os_family == "RedHat"
+
+- name: Install workstation packages on Debian
+  ansible.builtin.apt:
+    name: "{{ workstation_packages + workstation_debian_packages }}"
+    state: present
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Ensure Flathub remote exists when Flatpak is installed
+  ansible.builtin.command:
+    argv:
+      - flatpak
+      - remote-add
+      - --if-not-exists
+      - flathub
+      - https://flathub.org/repo/flathub.flatpakrepo
+  changed_when: false
+  failed_when: false
+
+- name: Install Flatpak apps
+  ansible.builtin.command:
+    argv:
+      - flatpak
+      - install
+      - --noninteractive
+      - --user
+      - -y
+      - flathub
+      - "{{ item }}"
+  loop: "{{ flatpak_packages }}"
+  register: flatpak_install
+  changed_when: "'Installing' in flatpak_install.stdout or 'Installing' in flatpak_install.stderr"
+  failed_when: false
+
+- name: Enable user podman socket when available
+  ansible.builtin.systemd:
+    name: podman.socket
+    scope: user
+    enabled: true
+    state: started
+  failed_when: false

@@ -1,84 +1,95 @@
 # Dotfiles
 
-Personal workstation and homelab configuration.
+Simple Ansible-managed workstation and homelab setup.
 
 ## Layout
 
-- `chezmoi/`: the chezmoi source tree. Chezmoi is responsible for dotfiles in `$HOME`.
-- `homelab/`: container apps and host service config for the homelab server.
-- `scripts/`: first-run install scripts that install base dependencies, clone this repo, and hand off to chezmoi.
+- `ansible/`: inventory, variables, playbook, tasks, and templates.
+- `home/`: dotfiles copied into `$HOME` by Ansible.
+- `homelab/apps/`: Podman Compose app definitions.
+- `homelab/scripts/`: small homelab CLI used by Ansible container tags.
+- `scripts/`: the small set of user entrypoints.
 
-## Dotfiles Install
+Ansible is the main setup system for both workstation and server setup. There are no roles, Galaxy dependencies, Vault files, or deep task nesting.
 
-Auto-detect Fedora, Debian, or Ubuntu:
+## Control Flow
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/yanklio/dotfiles/main/scripts/install.sh | bash
+User entrypoints live in `scripts/`. They call Ansible. Ansible applies machine state and calls the homelab CLI only for container lifecycle operations.
+
+```text
+scripts/workstation.sh -> ansible/site.yml -> workstation tasks
+scripts/server.sh      -> ansible/site.yml -> server tasks
+scripts/containers.sh  -> ansible/site.yml tags -> homelab/scripts/homelab.sh -> podman compose
 ```
 
-Force a distro when needed:
+The flow is intentionally one-way. `homelab/scripts/homelab.sh` never calls Ansible.
+
+## Workstation
+
+Fresh install or update clone:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yanklio/dotfiles/main/scripts/fedora-install.sh | bash
-curl -fsSL https://raw.githubusercontent.com/yanklio/dotfiles/main/scripts/debian-install.sh | bash
+./scripts/install.sh --target workstation
 ```
 
-The install scripts install `git`, `curl`, `ca-certificates`, and `chezmoi`, clone this repo to `~/Dotfiles`, then run:
+Run setup from an existing clone:
 
 ```bash
-chezmoi init --source="$HOME/Dotfiles/chezmoi"
-chezmoi apply
+./scripts/workstation.sh
 ```
 
-Override the clone target or repository when needed:
+Common setup installs dotfiles, shell tooling, npm globals, Go tools, Oh My Zsh, and upstream tools such as Zed, Ollama, and Tailscale when missing. Workstation setup additionally adds Flathub and installs the configured Flatpak apps.
+
+## Server
+
+Fresh install or update clone:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yanklio/dotfiles/main/scripts/install.sh | bash -s -- --dir "$HOME/src/Dotfiles" --repo "https://github.com/yanklio/dotfiles.git"
+./scripts/install.sh --target server
 ```
 
-Pass installer flags after the downloaded script:
+Run setup from an existing clone:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yanklio/dotfiles/main/scripts/install.sh | bash -s -- --dir "$HOME/src/Dotfiles"
+./scripts/server.sh
 ```
 
-Supported flags are `--repo URL`, `--dir PATH`, `--distro NAME`, `--fedora`, `--debian`, and `--ubuntu`.
+Server setup installs packages, writes `homelab/.env`, manages nginx, enables nginx, checks Podman restart support, and runs `homelab/scripts/homelab.sh doctor`.
 
-The dotfiles installer intentionally stops after `chezmoi apply`. Run workstation bootstrap explicitly when packages, tools, services, Flatpaks, or GNOME settings are needed:
+It does not start containers by default.
+
+## Containers
 
 ```bash
-~/Dotfiles/chezmoi/scripts/bootstrap.sh
+./scripts/containers.sh start
+./scripts/containers.sh restart
+./scripts/containers.sh status
 ```
 
-## Dotfiles
+Container operations go through Ansible tags, then Ansible calls the homelab CLI. Ansible does not duplicate compose logic.
 
-Initialize and apply the dotfiles source directly:
+App-specific maintenance commands use `app <name> <command>`:
 
 ```bash
-chezmoi init --source="$HOME/Dotfiles/chezmoi"
-chezmoi apply
+./scripts/containers.sh app open-webui
+./scripts/containers.sh app open-webui reset-data
 ```
 
-Preview changes before applying:
+`open-webui reset-data` is registered in `homelab/apps/open-webui/actions.py`. The homelab CLI loads app commands through `homelab/scripts/app_commands.py` and runs compose operations through `homelab/scripts/runtime.py`.
+
+The command stops Open WebUI, moves `homelab/apps/open-webui/data` to a timestamped backup directory, creates a fresh data directory, and starts Open WebUI again.
+
+## Validation
 
 ```bash
-chezmoi --source="$HOME/Dotfiles/chezmoi" diff --exclude=scripts
+./scripts/check.sh
 ```
 
-Dotfiles are applied with chezmoi. Packages, tools, services, and GNOME settings are handled explicitly by `chezmoi/scripts/bootstrap.sh`.
+## Safety Defaults
 
-Run repository checks:
-
-```bash
-~/Dotfiles/scripts/check.sh
-```
-
-## Homelab
-
-Homelab files are intentionally outside the chezmoi source. Install a fresh server with:
-
-```bash
-~/Dotfiles/homelab/scripts/install-server.sh
-```
-
-Runtime state and secrets under `homelab/` are ignored by git.
+- Nginx is managed by Ansible from `ansible/templates/nginx/homelab.conf.j2`.
+- `HOMELAB_ACCESS_MODE=tailscale-only` is the safe default.
+- `DHCP_ACTIVE=false` is the safe default.
+- Pi-hole DHCP is only enabled if explicitly set in `ansible/vars.yml`.
+- Pi-hole is included in container operations, but DHCP stays disabled unless explicitly enabled.
+- Container image tags are pinned through `ansible/vars.yml` and `homelab/.env`.

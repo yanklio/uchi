@@ -1,0 +1,46 @@
+---
+# Keep container orchestration one-way:
+# scripts/containers.sh -> Ansible tag -> homelab CLI -> podman compose.
+# The homelab CLI must not call Ansible back.
+
+- name: Start homelab containers
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh start"
+  tags: [never, start-containers]
+
+- name: Stop homelab containers
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh stop"
+  tags: [never, stop-containers]
+
+- name: Restart homelab containers
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh restart"
+  tags: [never, restart-containers]
+
+- name: Show homelab container status
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh status"
+  changed_when: false
+  tags: [never, status]
+
+- name: Run homelab doctor
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh doctor"
+  changed_when: false
+  tags: [never, doctor]
+
+- name: Run homelab app command
+  ansible.builtin.command:
+    argv:
+      - "{{ homelab_dir }}/scripts/homelab.sh"
+      - app
+      - "{{ homelab_app }}"
+      - "{{ homelab_app_command }}"
+  register: homelab_app_command_result
+  changed_when: homelab_app_command != 'list'
+  tags: [never, app-command]
+
+- name: Show homelab app command output
+  ansible.builtin.debug:
+    msg: "{{ homelab_app_command_result.stdout_lines + homelab_app_command_result.stderr_lines }}"
+  when:
+    - homelab_app_command_result is defined
+    - homelab_app_command_result.stdout_lines | length > 0 or homelab_app_command_result.stderr_lines | length > 0
+  changed_when: false
+  tags: [never, app-command]

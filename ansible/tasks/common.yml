@@ -1,0 +1,114 @@
+---
+- name: Install common packages on Fedora
+  ansible.builtin.dnf:
+    name: "{{ common_packages + common_fedora_packages }}"
+    state: present
+  become: true
+  when: ansible_os_family == "RedHat"
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Install common packages on Debian
+  ansible.builtin.apt:
+    name: "{{ common_packages + common_debian_packages }}"
+    state: present
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Find dotfile directories
+  ansible.builtin.find:
+    paths: "{{ dotfiles_home_dir }}"
+    file_type: directory
+    recurse: true
+    hidden: true
+  register: dotfile_dirs
+  delegate_to: localhost
+  run_once: true
+
+- name: Create dotfile directories
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/{{ item.path | regex_replace('^' ~ (dotfiles_home_dir | regex_escape) ~ '/', '') }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ dotfile_dirs.files }}"
+  when: item.path != dotfiles_home_dir
+
+- name: Find dotfiles
+  ansible.builtin.find:
+    paths: "{{ dotfiles_home_dir }}"
+    file_type: file
+    recurse: true
+    hidden: true
+  register: dotfiles
+  delegate_to: localhost
+  run_once: true
+
+- name: Copy dotfiles into home
+  ansible.builtin.copy:
+    src: "{{ item.path }}"
+    dest: "{{ ansible_env.HOME }}/{{ item.path | regex_replace('^' ~ (dotfiles_home_dir | regex_escape) ~ '/', '') }}"
+    mode: preserve
+    backup: true
+  loop: "{{ dotfiles.files }}"
+
+- name: Install Go tools
+  ansible.builtin.command:
+    argv:
+      - go
+      - install
+      - "{{ item }}"
+  loop: "{{ go_tools }}"
+  changed_when: false
+  failed_when: false
+
+- name: Install npm global packages
+  ansible.builtin.command:
+    argv: "{{ ['npm', 'install', '--global', '--prefix', ansible_env.HOME + '/.local'] + npm_packages }}"
+  changed_when: false
+  failed_when: false
+
+- name: Check upstream tools
+  ansible.builtin.command:
+    argv:
+      - sh
+      - -c
+      - "command -v {{ item.command }}"
+  loop: "{{ upstream_tools }}"
+  register: upstream_tool_checks
+  changed_when: false
+  failed_when: false
+
+- name: Install upstream tools
+  ansible.builtin.shell: "curl -fsSL {{ item.item.install_url }} | sh"
+  args:
+    executable: /bin/bash
+  loop: "{{ upstream_tool_checks.results }}"
+  when: item.rc != 0
+
+- name: Check Oh My Zsh directory
+  ansible.builtin.stat:
+    path: "{{ ansible_env.HOME }}/.oh-my-zsh"
+  register: oh_my_zsh_dir
+
+- name: Install Oh My Zsh
+  ansible.builtin.shell: >-
+    curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh --unattended
+  args:
+    executable: /bin/bash
+  environment:
+    RUNZSH: "no"
+    CHSH: "no"
+    KEEP_ZSHRC: "yes"
+  when: not oh_my_zsh_dir.stat.isdir | default(false)
+
+- name: Enable ollama service when available
+  ansible.builtin.systemd:
+    name: ollama
+    enabled: true
+    state: started
+  become: true
+  failed_when: false

@@ -3,27 +3,25 @@ set -euo pipefail
 
 dotfiles_repo="${DOTFILES_REPO:-https://github.com/yanklio/dotfiles.git}"
 dotfiles_dir="${DOTFILES_DIR:-$HOME/Dotfiles}"
+dotfiles_branch="${DOTFILES_BRANCH:-main}"
 distro="auto"
+target=""
 package_manager=""
-
-export PATH="$HOME/.local/bin:$PATH"
 
 usage() {
   cat <<EOF
 Usage: $0 [options]
 
-Installs the minimum dependencies, clones this repository, and applies the
-chezmoi dotfiles source. Workstation bootstrap and homelab setup are explicit
-follow-up commands.
+Install base dependencies, clone/update this repo, and optionally run an
+Ansible wrapper.
 
 Options:
-  --repo URL         Clone from URL (default: $dotfiles_repo)
-  --dir PATH         Clone to PATH (default: $dotfiles_dir)
-  --distro NAME      Force package setup for auto, fedora, or debian
-  --fedora           Alias for --distro fedora
-  --debian           Alias for --distro debian
-  --ubuntu           Alias for --distro debian
-  -h, --help         Show this help
+  --repo URL            Clone from URL (default: $dotfiles_repo)
+  --dir PATH            Clone to PATH (default: $dotfiles_dir)
+  --branch NAME         Git branch (default: $dotfiles_branch)
+  --target NAME         Run workstation or server after clone
+  --distro NAME         Force package setup for auto, fedora, or debian
+  -h, --help            Show this help
 EOF
 }
 
@@ -35,10 +33,7 @@ as_root() {
   if [[ $EUID -eq 0 ]]; then
     "$@"
   else
-    have sudo || {
-      echo "sudo is required" >&2
-      exit 1
-    }
+    have sudo || { echo "sudo is required" >&2; exit 1; }
     sudo "$@"
   fi
 }
@@ -46,23 +41,11 @@ as_root() {
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --fedora) distro="fedora" ;;
-      --debian | --ubuntu) distro="debian" ;;
-      --distro)
-        [[ $# -ge 2 ]] || { echo "--distro requires a value" >&2; exit 2; }
-        distro="$2"
-        shift
-        ;;
-      --repo)
-        [[ $# -ge 2 ]] || { echo "--repo requires a value" >&2; exit 2; }
-        dotfiles_repo="$2"
-        shift
-        ;;
-      --dir)
-        [[ $# -ge 2 ]] || { echo "--dir requires a value" >&2; exit 2; }
-        dotfiles_dir="$2"
-        shift
-        ;;
+      --distro) distro="${2:?--distro requires a value}"; shift ;;
+      --repo) dotfiles_repo="${2:?--repo requires a value}"; shift ;;
+      --dir) dotfiles_dir="${2:?--dir requires a value}"; shift ;;
+      --branch) dotfiles_branch="${2:?--branch requires a value}"; shift ;;
+      --target) target="${2:?--target requires a value}"; shift ;;
       -h | --help) usage; exit 0 ;;
       *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
     esac
@@ -90,30 +73,22 @@ detect_package_manager() {
 
 install_base_packages() {
   detect_package_manager
-
   echo "Installing base packages..."
   case "$package_manager" in
-    dnf)
-      as_root dnf install -y git curl ca-certificates
-      ;;
+    dnf) as_root dnf install -y git curl ca-certificates ansible ;;
     apt-get)
       as_root apt-get update
-      as_root apt-get install -y git curl ca-certificates
+      as_root apt-get install -y git curl ca-certificates ansible
       ;;
   esac
 }
 
-install_chezmoi() {
-  have chezmoi && return 0
-
-  echo "Installing chezmoi..."
-  sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
-}
-
-clone_dotfiles() {
+clone_or_update_repo() {
   if [[ -d "$dotfiles_dir/.git" ]]; then
     echo "Updating existing dotfiles repo..."
-    git -C "$dotfiles_dir" pull --ff-only
+    git -C "$dotfiles_dir" fetch --prune origin "$dotfiles_branch"
+    git -C "$dotfiles_dir" checkout "$dotfiles_branch"
+    git -C "$dotfiles_dir" pull --ff-only origin "$dotfiles_branch"
     return 0
   fi
 
@@ -123,37 +98,33 @@ clone_dotfiles() {
   fi
 
   echo "Cloning dotfiles..."
-  git clone "$dotfiles_repo" "$dotfiles_dir"
+  git clone --branch "$dotfiles_branch" "$dotfiles_repo" "$dotfiles_dir"
 }
 
-apply_dotfiles() {
-  local chezmoi_source="$dotfiles_dir/chezmoi"
+run_target() {
+  case "$target" in
+    "")
+      cat <<EOF
 
-  echo "Initializing chezmoi..."
-  chezmoi init --source="$chezmoi_source"
+Repo ready at $dotfiles_dir.
 
-  echo "Applying dotfiles..."
-  chezmoi apply
-}
-
-next_steps() {
-  cat <<EOF
-
-Dotfiles install complete.
-
-Optional follow-up commands:
-  Workstation bootstrap: $dotfiles_dir/chezmoi/scripts/bootstrap.sh
-  Homelab server setup:  $dotfiles_dir/homelab/scripts/install-server.sh
+Next commands:
+  Workstation: $dotfiles_dir/scripts/workstation.sh
+  Server:      $dotfiles_dir/scripts/server.sh
+  Containers:  $dotfiles_dir/scripts/containers.sh start
+  Check:       $dotfiles_dir/scripts/check.sh
 EOF
+      ;;
+    workstation | server) "$dotfiles_dir/scripts/$target.sh" ;;
+    *) echo "Unknown target: $target" >&2; exit 2 ;;
+  esac
 }
 
 main() {
   parse_args "$@"
   install_base_packages
-  install_chezmoi
-  clone_dotfiles
-  apply_dotfiles
-  next_steps
+  clone_or_update_repo
+  run_target
 }
 
 main "$@"
