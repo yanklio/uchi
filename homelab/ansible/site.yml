@@ -1,0 +1,6 @@
+---
+- name: Configure homelab host services
+  hosts: homelab
+  become: true
+  roles:
+    - role: nginx
