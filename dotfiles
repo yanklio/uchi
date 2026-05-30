@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export DOTFILES_DIR="${script_dir}"
+
+if [[ -z "${1:-}" || "${1:-}" == "help" || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  echo "Usage: $0 [command]"
+  echo ""
+  echo "Commands:"
+  echo "  bootstrap    Run workstation bootstrap playbook"
+  echo "  homelab      Run homelab lifecycle playbook"
+  echo "  server       Install homelab server dependencies and initialize"
+  echo "  help         Show this help"
+  exit 0 2>/dev/null || exit 0
+fi
+
+if ! command -v ansible-playbook >/dev/null 2>&1; then
+  echo "ansible-playbook is required. Please install Ansible." >&2
+  exit 1 2>/dev/null || exit 1
+fi
+
+case "$1" in
+  bootstrap)
+    ansible-playbook "${DOTFILES_DIR}/ansible/workstation.yml"
+    ;;
+  homelab)
+    ansible-playbook "${DOTFILES_DIR}/ansible/homelab.yml"
+    ;;
+  server)
+    ansible-playbook "${DOTFILES_DIR}/ansible/server-install.yml"
+    ;;
+  *)
+    echo "Unknown command: $1" >&2
+    exit 2 2>/dev/null || exit 2
+    ;;
+esac

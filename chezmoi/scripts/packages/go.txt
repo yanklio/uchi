@@ -1,2 +1,0 @@
-# Terminal git UI
-github.com/jesseduffield/lazygit@latest

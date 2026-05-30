@@ -142,8 +142,8 @@ next_steps() {
 Dotfiles install complete.
 
 Optional follow-up commands:
-  Workstation bootstrap: $dotfiles_dir/chezmoi/scripts/bootstrap.sh
-  Homelab server setup:  $dotfiles_dir/homelab/scripts/install-server.sh
+  Workstation bootstrap: $dotfiles_dir/dotfiles bootstrap
+  Homelab server setup:  $dotfiles_dir/dotfiles server
 EOF
 }
 

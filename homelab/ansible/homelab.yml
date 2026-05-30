@@ -1,7 +1,0 @@
----
-- name: Manage homelab containers
-  hosts: localhost
-  connection: local
-  gather_facts: false
-  roles:
-    - role: roles/homelab_lifecycle
