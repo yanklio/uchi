@@ -121,13 +121,8 @@ container_images:
   open_webui: ghcr.io/open-webui/open-webui:v0.6.26
 
 homelab_app_files:
-  - src: apps/pi-hole/docker-compose.yml
-    dest: apps/pi-hole/docker-compose.yml
-  - src: apps/glance/docker-compose.yml
-    dest: apps/glance/docker-compose.yml
-  - src: apps/glance/glance.yml
-    dest: apps/glance/glance.yml
-  - src: apps/open-webui/docker-compose.yml
-    dest: apps/open-webui/docker-compose.yml
-  - src: apps/open-webui/actions.py
-    dest: apps/open-webui/actions.py
+  - apps/pi-hole/docker-compose.yml
+  - apps/glance/docker-compose.yml
+  - apps/glance/glance.yml
+  - apps/open-webui/docker-compose.yml
+  - apps/open-webui/actions.py

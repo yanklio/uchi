@@ -33,8 +33,8 @@
 
 - name: Copy homelab app definitions
   ansible.builtin.copy:
-    src: "{{ dotfiles_source_dir }}/homelab/{{ item.src }}"
-    dest: "{{ homelab_dir }}/{{ item.dest }}"
+    src: "{{ dotfiles_source_dir }}/homelab/{{ item }}"
+    dest: "{{ homelab_dir }}/{{ item }}"
     mode: "0644"
   loop: "{{ homelab_app_files }}"
 
