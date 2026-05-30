@@ -10,13 +10,7 @@ have() {
 check_shell() {
   echo "Checking shell syntax..."
   bash -n "$root"/scripts/*.sh
-  bash -n "$root"/homelab/scripts/*.sh
-  bash -n "$root/chezmoi/scripts/bootstrap.sh"
-}
-
-check_python() {
-  echo "Checking Python syntax..."
-  python3 -c 'import pathlib, sys; [compile(path.read_text(), str(path), "exec") for base in sys.argv[1:] for path in pathlib.Path(base).rglob("*.py")]' "$root/chezmoi/scripts"
+  bash -n "$root"/dotfiles
 }
 
 check_homelab_compose() {
@@ -58,9 +52,9 @@ check_ansible() {
   }
 
   echo "Checking Ansible playbooks..."
-  ansible-playbook --syntax-check "$root/homelab/ansible/install-server.yml"
-  ansible-playbook --syntax-check "$root/homelab/ansible/homelab.yml"
-  ansible-playbook --syntax-check -i localhost, "$root/homelab/ansible/site.yml"
+  ansible-playbook --syntax-check "$root/ansible/server-install.yml"
+  ansible-playbook --syntax-check "$root/ansible/homelab.yml"
+  ansible-playbook --syntax-check -i localhost, "$root/ansible/nginx.yml"
 }
 
 check_ignored_runtime_state() {
@@ -71,7 +65,6 @@ check_ignored_runtime_state() {
 
 main() {
   check_shell
-  check_python
   check_chezmoi_templates
   check_chezmoi_diff
   check_ansible

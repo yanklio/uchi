@@ -201,13 +201,13 @@
 
     - name: Start homelab services
       ansible.builtin.include_role:
-        name: "{{ homelab_dir }}/ansible/roles/homelab_lifecycle"
+        name: "{{ playbook_dir }}/../ansible/homelab.yml"
       vars:
         homelab_action: start
 
     - name: Apply homelab nginx configuration
       ansible.builtin.include_role:
-        name: "{{ homelab_dir }}/ansible/roles/nginx"
+        name: "{{ playbook_dir }}/roles/nginx"
         apply:
           become: true
 

@@ -5,4 +5,4 @@
   gather_facts: false
   become: true
   roles:
-    - role: roles/nginx
+    - role: roles/homelab_nginx

@@ -1,0 +1,74 @@
+---
+- name: Manage homelab containers
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    homelab_action: start
+    homelab_dir: "{{ playbook_dir }}/../homelab"
+    homelab_apps_dir: "{{ homelab_dir }}/apps"
+    homelab_env_file: "{{ homelab_dir }}/.env"
+    homelab_default_apps: glance
+    homelab_pihole_app: pi-hole
+    homelab_valid_actions:
+      - start
+      - stop
+      - restart
+      - status
+      - pihole
+    homelab_rootless_apps: ["glance"]
+
+  tasks:
+    - name: Validate requested homelab action
+      ansible.builtin.assert:
+        that:
+          - homelab_action in homelab_valid_actions
+        fail_msg: "Unknown homelab action: {{ homelab_action }}"
+
+    - name: Check whether homelab .env exists
+      ansible.builtin.stat:
+        path: "{{ homelab_env_file }}"
+      register: homelab_env_stat
+
+    - name: Load homelab environment
+      ansible.builtin.include_vars:
+        file: "{{ homelab_env_file }}"
+        name: homelab_env
+      when: homelab_env_stat.stat.exists
+
+    - name: Check podman compose availability
+      ansible.builtin.shell: command -v podman-compose || command -v docker-compose
+      register: podman_compose_check
+      changed_when: false
+      failed_when: false
+
+    - name: Start homelab apps
+      ansible.builtin.command:
+        argv: "{{ ['podman', 'compose'] + (['--env-file', homelab_env_file] if homelab_env_stat.stat.exists else []) + ['up', '-d'] }}"
+        chdir: "{{ homelab_apps_dir }}/{{ item }}"
+      loop: "{{ homelab_rootless_apps }}"
+      when: homelab_action in ['start', 'restart']
+
+    - name: Stop homelab apps
+      ansible.builtin.command:
+        argv: "{{ ['podman', 'compose'] + (['--env-file', homelab_env_file] if homelab_env_stat.stat.exists else []) + ['down'] }}"
+        chdir: "{{ homelab_apps_dir }}/{{ item }}"
+      loop: "{{ homelab_rootless_apps }}"
+      when: homelab_action in ['stop', 'restart']
+
+    - name: Start Pi-hole
+      ansible.builtin.command:
+        argv: "{{ ['podman', 'compose'] + (['--env-file', homelab_env_file] if homelab_env_stat.stat.exists else []) + ['up', '-d'] }}"
+        chdir: "{{ homelab_apps_dir }}/{{ homelab_pihole_app }}"
+      become: true
+      when: homelab_action in ['pihole', 'start', 'restart']
+      ignore_errors: true
+
+    - name: Stop Pi-hole
+      ansible.builtin.command:
+        argv: "{{ ['podman', 'compose'] + (['--env-file', homelab_env_file] if homelab_env_stat.stat.exists else []) + ['down'] }}"
+        chdir: "{{ homelab_apps_dir }}/{{ homelab_pihole_app }}"
+      become: true
+      when: homelab_action in ['stop', 'restart']
+      ignore_errors: true
