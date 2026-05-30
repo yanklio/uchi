@@ -1,0 +1,210 @@
+---
+- name: Manage homelab services
+  hosts: homelab
+  vars:
+    homelab_dir: "{{ playbook_dir }}"
+    homelab_env_file: "{{ homelab_dir }}/.env"
+    homelab_apps_dir: "{{ homelab_dir }}/apps"
+    homelab_env_required: true
+    homelab_ipv4_regex: '^(?:25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])){3}$'
+
+  pre_tasks:
+    - name: Check homelab .env file
+      ansible.builtin.stat:
+        path: "{{ homelab_env_file }}"
+      register: homelab_env_stat
+      tags:
+        - preflight
+
+    - name: Require homelab .env file
+      ansible.builtin.fail:
+        msg: "Missing {{ homelab_env_file }}. Copy homelab/.env.example to homelab/.env and set PIHOLE_PASSWORD."
+      when:
+        - homelab_env_required | bool
+        - not homelab_env_stat.stat.exists
+      tags:
+        - preflight
+
+    - name: Tighten homelab .env permissions
+      ansible.builtin.file:
+        path: "{{ homelab_env_file }}"
+        mode: "0600"
+      when: homelab_env_stat.stat.exists
+      tags:
+        - preflight
+
+    - name: Parse homelab .env values
+      ansible.builtin.command:
+        argv:
+          - python3
+          - -c
+          - |
+            import json
+            import sys
+
+            values = {}
+            with open(sys.argv[1], encoding="utf-8") as env_file:
+                for raw_line in env_file:
+                    line = raw_line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    name, value = line.split("=", 1)
+                    values[name.strip()] = value.strip().strip('"').strip("'")
+            print(json.dumps(values))
+          - "{{ homelab_env_file }}"
+      register: homelab_env_parse
+      changed_when: false
+      when: homelab_env_stat.stat.exists
+      tags:
+        - preflight
+
+    - name: Set homelab environment facts
+      ansible.builtin.set_fact:
+        homelab_env: "{{ (homelab_env_parse.stdout if (homelab_env_parse is defined and homelab_env_parse.stdout is defined) else '{}') | from_json }}"
+      tags:
+        - preflight
+
+    - name: Set homelab validation facts
+      ansible.builtin.set_fact:
+        homelab_apps: "{{ ((homelab_env.HOMELAB_APPS | default('glance')) | regex_replace(',', ' ')).split() }}"
+        homelab_access_mode: "{{ homelab_env.HOMELAB_ACCESS_MODE | default('lan') }}"
+      tags:
+        - preflight
+
+    - name: Set rootless homelab app facts
+      ansible.builtin.set_fact:
+        homelab_rootless_apps: "{{ homelab_apps | reject('equalto', 'pi-hole') | list }}"
+      tags:
+        - preflight
+
+    - name: Reject invalid homelab app names
+      ansible.builtin.assert:
+        that:
+          - "'/' not in item"
+          - item not in ['.', '..']
+        fail_msg: "Invalid app name in HOMELAB_APPS: {{ item }}"
+      loop: "{{ homelab_rootless_apps }}"
+      tags:
+        - preflight
+
+    - name: Check homelab app compose files
+      ansible.builtin.stat:
+        path: "{{ homelab_apps_dir }}/{{ item }}/docker-compose.yml"
+      loop: "{{ homelab_rootless_apps }}"
+      register: homelab_app_compose_stats
+      tags:
+        - preflight
+
+    - name: Require homelab app compose files
+      ansible.builtin.fail:
+        msg: "Unknown homelab app: {{ item.item }}"
+      loop: "{{ homelab_app_compose_stats.results | default([]) }}"
+      when: not item.stat.exists
+      tags:
+        - preflight
+
+    - name: Validate homelab access mode
+      ansible.builtin.assert:
+        that:
+          - homelab_access_mode in ['lan', 'tailscale-only']
+        fail_msg: "Invalid HOMELAB_ACCESS_MODE: {{ homelab_access_mode }}"
+      tags:
+        - preflight
+
+    - name: Reject example Pi-hole password
+      ansible.builtin.assert:
+        that:
+          - homelab_env.PIHOLE_PASSWORD | default('') != 'change_me_to_a_strong_password'
+        fail_msg: "PIHOLE_PASSWORD still uses the example value"
+      tags:
+        - preflight
+
+    - name: Require tailscale command in tailscale-only mode
+      ansible.builtin.shell: command -v tailscale
+      register: homelab_tailscale_command
+      changed_when: false
+      failed_when: false
+      when: homelab_access_mode == 'tailscale-only'
+      tags:
+        - preflight
+        - tailscale
+
+    - name: Fail when tailscale command is missing
+      ansible.builtin.fail:
+        msg: "tailscale is required"
+      when:
+        - homelab_access_mode == 'tailscale-only'
+        - (homelab_tailscale_command.rc | default(1)) != 0
+      tags:
+        - preflight
+        - tailscale
+
+    - name: Require tailscale status in tailscale-only mode
+      ansible.builtin.command:
+        argv:
+          - tailscale
+          - status
+      register: homelab_tailscale_status
+      changed_when: false
+      failed_when: false
+      when: homelab_access_mode == 'tailscale-only'
+      tags:
+        - preflight
+        - tailscale
+
+    - name: Fail when tailscale is not connected
+      ansible.builtin.fail:
+        msg: "Tailscale is not running or this host is not logged in; run 'tailscale up' first."
+      when:
+        - homelab_access_mode == 'tailscale-only'
+        - (homelab_tailscale_status.rc | default(1)) != 0
+      tags:
+        - preflight
+        - tailscale
+
+    - name: Detect tailscale IPv4 address in tailscale-only mode
+      ansible.builtin.command:
+        argv:
+          - tailscale
+          - ip
+          - -4
+      register: homelab_tailscale_ip
+      changed_when: false
+      failed_when: false
+      when: homelab_access_mode == 'tailscale-only'
+      tags:
+        - preflight
+        - tailscale
+
+    - name: Set tailscale IPv4 facts
+      ansible.builtin.set_fact:
+        homelab_tailscale_ipv4_addresses: "{{ homelab_tailscale_ip.stdout_lines | default([]) | map('trim') | select('match', homelab_ipv4_regex) | list }}"
+      when: homelab_access_mode == 'tailscale-only'
+      tags:
+        - preflight
+        - tailscale
+
+    - name: Require tailscale IPv4 address
+      ansible.builtin.fail:
+        msg: "No Tailscale IPv4 address found; check 'tailscale status' and 'tailscale ip -4'."
+      when:
+        - homelab_access_mode == 'tailscale-only'
+        - (homelab_tailscale_ip.rc | default(1)) != 0 or (homelab_tailscale_ipv4_addresses | default([]) | length) == 0
+      tags:
+        - preflight
+        - tailscale
+
+  tasks:
+    - name: Start homelab containers
+      ansible.builtin.command:
+        argv:
+          - "{{ homelab_dir }}/scripts/homelab.sh"
+          - start
+      changed_when: true
+
+    - name: Apply homelab nginx configuration
+      ansible.builtin.command:
+        argv:
+          - "{{ homelab_dir }}/scripts/homelab.sh"
+          - nginx
+      changed_when: true
