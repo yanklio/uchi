@@ -37,11 +37,11 @@ install_base_packages() {
   echo "Installing homelab packages..."
   case "$package_manager" in
     dnf)
-      sudo dnf install -y git curl ca-certificates podman nginx
+      sudo dnf install -y git curl ca-certificates podman nginx ansible
       ;;
     apt-get)
       sudo apt-get update
-      sudo apt-get install -y git curl ca-certificates podman nginx
+      sudo apt-get install -y git curl ca-certificates podman nginx ansible
       ;;
   esac
 

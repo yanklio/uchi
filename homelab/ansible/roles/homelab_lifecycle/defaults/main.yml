@@ -1,0 +1,13 @@
+---
+homelab_action: start
+homelab_dir: "{{ playbook_dir }}/../.."
+homelab_apps_dir: "{{ homelab_dir }}/apps"
+homelab_env_file: "{{ homelab_dir }}/.env"
+homelab_default_apps: glance
+homelab_pihole_app: pi-hole
+homelab_valid_actions:
+  - start
+  - stop
+  - restart
+  - status
+  - pihole

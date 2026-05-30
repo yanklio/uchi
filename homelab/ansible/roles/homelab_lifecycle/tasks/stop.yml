@@ -1,0 +1,26 @@
+---
+- name: Validate podman compose availability
+  ansible.builtin.include_tasks: podman.yml
+
+- name: Stop rootless homelab apps
+  ansible.builtin.command:
+    argv: "{{ ['podman', 'compose'] + (['--env-file', homelab_env_file] if homelab_env_stat.stat.exists else []) + ['down'] }}"
+    chdir: "{{ homelab_apps_dir }}/{{ item }}"
+  environment: "{{ homelab_app_environment }}"
+  loop: "{{ homelab_rootless_apps }}"
+
+- name: Check Pi-hole compose file
+  ansible.builtin.stat:
+    path: "{{ homelab_apps_dir }}/{{ homelab_pihole_app }}/docker-compose.yml"
+  register: homelab_pihole_compose_stat
+
+- name: Stop rootful Pi-hole
+  ansible.builtin.command:
+    argv: "{{ ['podman', 'compose'] + (['--env-file', homelab_env_file] if homelab_env_stat.stat.exists else []) + ['down'] }}"
+    chdir: "{{ homelab_apps_dir }}/{{ homelab_pihole_app }}"
+  become: true
+  when: homelab_pihole_compose_stat.stat.exists
+
+- name: Report homelab stop complete
+  ansible.builtin.debug:
+    msg: "All homelab containers stopped."
