@@ -74,7 +74,7 @@ def run_app_command(app: str, command: str, env: dict[str, str]) -> int:
         commands = ", ".join(sorted(app_commands))
         print(f"unknown command for {app}: {command}. Available: {commands}", file=sys.stderr)
         return 2
-    if not require_podman_compose():
+    if env.get("HOMELAB_DRY_RUN") != "1" and not require_podman_compose():
         return 1
     context = AppCommandContext(
         app=app,

@@ -26,17 +26,15 @@ common_fedora_packages:
   - nodejs-npm
 
 common_debian_packages:
+  - python3-apt
   - npm
   - golang-go
 
 workstation_packages:
-  - git-delta
-  - fastfetch
   - htop
   - stow
   - podman
   - bat
-  - eza
   - fd-find
   - btop
   - gh
@@ -46,6 +44,9 @@ workstation_packages:
   - cava
 
 workstation_fedora_packages:
+  - git-delta
+  - fastfetch
+  - eza
   - vim-enhanced
   - zoxide
   - bash-completion
@@ -96,8 +97,12 @@ server_packages:
   - ca-certificates
   - podman
   - nginx
-  - tailscale
   - python3
+
+server_fedora_packages:
+  - tailscale
+
+server_debian_packages: []
 
 homelab_access_mode: tailscale-only
 homelab_app_bind: 127.0.0.1

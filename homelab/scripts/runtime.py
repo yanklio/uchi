@@ -97,6 +97,17 @@ def doctor(env: dict[str, str]) -> int:
 
 
 def operate(action: str, env: dict[str, str]) -> int:
+    if env.get("HOMELAB_DRY_RUN") == "1":
+        status = 0
+        for app in selected_apps(env):
+            if not has_compose_file(app):
+                print(f"skipping unknown app: {app}", file=sys.stderr)
+                status = 1
+                continue
+            rc = run(compose_cmd(action), cwd=app_dir(app), env=env)
+            status = status or rc
+        return status
+
     if not require_podman_compose():
         return 1
     status = 0

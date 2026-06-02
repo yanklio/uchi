@@ -24,7 +24,7 @@ check_python() {
 }
 
 check_yaml() {
-  have yamllint || return 0
+  have yamllint || { echo "yamllint is not installed; skipping YAML lint."; return 0; }
   echo "Checking YAML..."
   yamllint "$root/ansible" "$root/homelab/apps"
 }
@@ -40,14 +40,14 @@ check_ansible() {
 }
 
 check_ansible_lint() {
-  have ansible-lint || return 0
+  have ansible-lint || { echo "ansible-lint is not installed; skipping Ansible lint."; return 0; }
   echo "Checking Ansible lint..."
   ansible-lint "$root/ansible/site.yml"
 }
 
 check_compose() {
-  have podman || return 0
-  podman compose version >/dev/null 2>&1 || return 0
+  have podman || { echo "podman is not installed; skipping compose checks."; return 0; }
+  podman compose version >/dev/null 2>&1 || { echo "podman compose is not available; skipping compose checks."; return 0; }
 
   echo "Checking compose files..."
   local compose_file app_dir env_arg=()

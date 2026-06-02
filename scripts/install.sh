@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-dotfiles_repo="${DOTFILES_REPO:-https://github.com/yanklio/dotfiles.git}"
+dotfiles_repo="${DOTFILES_REPO:-https://github.com/yanklio/dot_uchi.git}"
 dotfiles_dir="${DOTFILES_DIR:-$HOME/Dotfiles}"
-dotfiles_branch="${DOTFILES_BRANCH:-main}"
+dotfiles_branch="${DOTFILES_BRANCH:-uchi}"
 distro="auto"
 target=""
 package_manager=""
@@ -78,7 +78,7 @@ install_base_packages() {
     dnf) as_root dnf install -y git curl ca-certificates ansible ;;
     apt-get)
       as_root apt-get update
-      as_root apt-get install -y git curl ca-certificates ansible
+      as_root apt-get install -y git curl ca-certificates ansible python3-apt
       ;;
   esac
 }
