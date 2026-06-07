@@ -66,15 +66,15 @@ workstation_debian_packages:
   - fonts-noto-color-emoji
 
 flatpak_packages:
-  - com.discord.Discord
+  - com.discordapp.Discord
   - com.slack.Slack
   - com.google.Chrome
   - app.zen_browser.zen
 
 npm_packages:
   - "@anthropic-ai/claude-code"
-  - opencode-ai
-  - "@mariozechner/pi-coding-agent"
+  - opencode-linux-x64-baseline
+  - "@mariozechner/pi-coding-agent@0.73.1"
   - yarn
 
 go_tools:

@@ -67,9 +67,22 @@
 
 - name: Install npm global packages
   ansible.builtin.command:
-    argv: "{{ ['npm', 'install', '--global', '--prefix', ansible_env.HOME + '/.local'] + npm_packages }}"
+    argv:
+      - npm
+      - install
+      - --global
+      - --prefix
+      - "{{ ansible_env.HOME }}/.local"
+      - "{{ item }}"
+  loop: "{{ npm_packages }}"
   changed_when: false
-  failed_when: false
+
+- name: Ensure opencode CLI link exists when platform package is installed
+  ansible.builtin.file:
+    src: "{{ ansible_env.HOME }}/.local/lib/node_modules/opencode-linux-x64-baseline/bin/opencode"
+    dest: "{{ ansible_env.HOME }}/.local/bin/opencode"
+    state: link
+  when: "'opencode-linux-x64-baseline' in npm_packages"
 
 - name: Check upstream tools
   ansible.builtin.command:
@@ -96,7 +109,7 @@
 
 - name: Install Oh My Zsh
   ansible.builtin.shell: >-
-    curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh --unattended
+    curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh -s -- --unattended
   args:
     executable: /bin/bash
   environment:

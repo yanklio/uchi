@@ -19,10 +19,10 @@
       - flatpak
       - remote-add
       - --if-not-exists
+      - --user
       - flathub
       - https://flathub.org/repo/flathub.flatpakrepo
   changed_when: false
-  failed_when: false
 
 - name: Install Flatpak apps
   ansible.builtin.command:
@@ -37,7 +37,6 @@
   loop: "{{ flatpak_packages }}"
   register: flatpak_install
   changed_when: "'Installing' in flatpak_install.stdout or 'Installing' in flatpak_install.stderr"
-  failed_when: false
 
 - name: Enable user podman socket when available
   ansible.builtin.systemd:
