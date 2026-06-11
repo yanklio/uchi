@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 APPS_DIR = ROOT / "apps"
 ENV_FILE = ROOT / ".env"
-DEFAULT_APPS = ["pi-hole", "glance", "open-webui"]
+DEFAULT_APPS = ["pi-hole", "glance", "open-webui", "hermes"]
 
 
 def load_env() -> dict[str, str]:

@@ -24,6 +24,7 @@
     - "{{ homelab_dir }}/apps/pi-hole"
     - "{{ homelab_dir }}/apps/glance"
     - "{{ homelab_dir }}/apps/open-webui"
+    - "{{ homelab_dir }}/apps/hermes"
 
 - name: Copy homelab CLI scripts
   ansible.builtin.copy:
@@ -54,6 +55,18 @@
   register: nginx_config
   become: true
 
+- name: Remove legacy dotfiles nginx configs
+  ansible.builtin.file:
+    path: "/etc/nginx/conf.d/{{ item }}"
+    state: absent
+  loop:
+    - dotfiles-00-default.conf
+    - dotfiles-chat.localhost.conf
+    - dotfiles-glance.localhost.conf
+    - dotfiles-pihole.localhost.conf
+  register: legacy_nginx_configs
+  become: true
+
 - name: Test nginx config
   ansible.builtin.command: nginx -t
   become: true
@@ -73,7 +86,7 @@
     state: reloaded
   become: true
   when:
-    - nginx_config.changed
+    - nginx_config.changed or legacy_nginx_configs.changed
     - not ansible_check_mode
 
 - name: Enable podman restart service when available

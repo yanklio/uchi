@@ -7,6 +7,7 @@
   tasks:
     - name: Run common tasks
       ansible.builtin.import_tasks: tasks/common.yml
+      tags: common
 
 - name: Workstation setup
   hosts: workstation
@@ -16,6 +17,7 @@
   tasks:
     - name: Run workstation tasks
       ansible.builtin.import_tasks: tasks/workstation.yml
+      tags: workstation
 
 - name: Server setup
   hosts: server
@@ -25,5 +27,7 @@
   tasks:
     - name: Run server tasks
       ansible.builtin.import_tasks: tasks/server.yml
+      tags: server
     - name: Expose container operation tags
       ansible.builtin.import_tasks: tasks/containers.yml
+      tags: containers

@@ -105,11 +105,12 @@ server_fedora_packages:
 server_debian_packages: []
 
 homelab_access_mode: tailscale-only
-homelab_app_bind: 127.0.0.1
-homelab_apps: pi-hole,glance,open-webui
+homelab_app_bind: 0.0.0.0
+homelab_apps: pi-hole,glance,open-webui,hermes
 homelab_domain: home
 homelab_tailnet_dns_suffix: gmk-de
-homelab_tailnet_dns_names: glance,chat
+homelab_tailnet_magicdns_name: gmk-de.tailff91da.ts.net
+homelab_tailnet_dns_names: glance,chat,hermes
 homelab_enable_pihole_dns: false
 
 pihole_password: change_me_to_a_strong_password
@@ -120,10 +121,15 @@ dhcp_end: 192.168.1.200
 dhcp_router: 192.168.1.1
 dhcp_lease_time: 24h
 
+hermes_dashboard_basic_auth_username: admin
+hermes_dashboard_basic_auth_password: change_me_to_a_strong_password
+hermes_dashboard_basic_auth_secret: change_me_to_a_random_secret
+
 container_images:
   pihole: docker.io/pihole/pihole:2025.05.1
   glance: docker.io/glanceapp/glance:v0.8.4
   open_webui: ghcr.io/open-webui/open-webui:v0.6.26
+  hermes: docker.io/nousresearch/hermes-agent:latest
 
 homelab_app_files:
   - apps/pi-hole/docker-compose.yml
@@ -131,3 +137,5 @@ homelab_app_files:
   - apps/glance/glance.yml
   - apps/open-webui/docker-compose.yml
   - apps/open-webui/actions.py
+  - apps/hermes/docker-compose.yml
+  - apps/hermes/actions.py

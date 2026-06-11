@@ -6,3 +6,6 @@ apps/pi-hole/etc-dnsmasq.d/**
 
 # Open WebUI runtime database, uploads, and generated state.
 apps/open-webui/data/**
+
+# Hermes config, secrets, sessions, memories, logs, and generated state.
+apps/hermes/data/**
