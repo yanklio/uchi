@@ -1,0 +1,8 @@
+---
+node_packages:
+  - nodejs
+
+node_npm_packages:
+  - yarn
+
+node_npm_prefix: "{{ ansible_facts['env']['HOME'] }}/.local"

@@ -1,0 +1,4 @@
+---
+base_extra_packages:
+  - python3-apt
+  - golang-go

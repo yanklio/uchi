@@ -1,0 +1,23 @@
+---
+- name: Apply core tools
+  hosts: all
+  tags: [core, workstation, server]
+  roles:
+    - base
+    - zsh
+    - tmux
+    - vim
+    - neovim
+    - lazygit
+    - node
+    - ai-tools
+    - tailscale
+    - podman
+    - gh
+
+- name: Apply workstation tools
+  hosts: workstation
+  tags: [workstation]
+  roles:
+    - zed
+    - flatpak

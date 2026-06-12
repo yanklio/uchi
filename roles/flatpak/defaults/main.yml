@@ -1,0 +1,6 @@
+---
+flatpak_packages:
+  - com.discordapp.Discord
+  - com.slack.Slack
+  - com.google.Chrome
+  - app.zen_browser.zen

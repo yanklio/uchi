@@ -1,0 +1,27 @@
+---
+- name: Setup flatpak
+  block:
+    - name: Ensure Flathub remote exists
+      ansible.builtin.command:
+        argv:
+          - flatpak
+          - remote-add
+          - --if-not-exists
+          - --user
+          - flathub
+          - https://flathub.org/repo/flathub.flatpakrepo
+      changed_when: false
+
+    - name: Install Flatpak apps
+      ansible.builtin.command:
+        argv:
+          - flatpak
+          - install
+          - --noninteractive
+          - --user
+          - -y
+          - flathub
+          - "{{ item }}"
+      loop: "{{ flatpak_packages }}"
+      register: flatpak_install
+      changed_when: "'Installing' in flatpak_install.stdout or 'Installing' in flatpak_install.stderr"

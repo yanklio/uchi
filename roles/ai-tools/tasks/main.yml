@@ -1,0 +1,91 @@
+---
+- name: Setup ollama
+  block:
+    - name: Check if ollama is installed
+      ansible.builtin.command:
+        argv:
+          - which
+          - ollama
+      register: ollama_check
+      changed_when: false
+      failed_when: false
+
+    - name: Install ollama
+      ansible.builtin.shell: "curl -fsSL {{ ollama_install_url }} | sh"
+      args:
+        executable: /bin/bash
+      become: true
+      when: ollama_check.rc != 0
+
+    - name: Enable ollama service
+      ansible.builtin.systemd:
+        name: ollama
+        enabled: true
+        state: started
+      become: true
+      failed_when: false
+
+- name: Setup opencode
+  block:
+    - name: Install opencode
+      ansible.builtin.command:
+        argv:
+          - npm
+          - install
+          - --global
+          - --prefix
+          - "{{ opencode_prefix }}"
+          - opencode-linux-x64-baseline
+        creates: "{{ opencode_prefix }}/lib/node_modules/opencode-linux-x64-baseline"
+
+    - name: Create .config/opencode directory
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/opencode"
+        state: directory
+        mode: "0755"
+
+    - name: Copy opencode config
+      ansible.builtin.copy:
+        src: .config/opencode/
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/opencode/"
+        backup: true
+
+    - name: Ensure opencode CLI symlink
+      ansible.builtin.file:
+        src: "{{ opencode_prefix }}/lib/node_modules/opencode-linux-x64-baseline/bin/opencode"
+        dest: "{{ opencode_prefix }}/bin/opencode"
+        state: link
+
+- name: Setup pi-agent
+  block:
+    - name: Check if pi is installed
+      ansible.builtin.command:
+        argv:
+          - which
+          - pi
+      register: pi_check
+      changed_when: false
+      failed_when: false
+
+    - name: Install pi agent
+      ansible.builtin.shell: "curl -fsSL {{ pi_agent_install_url }} | sh"
+      args:
+        executable: /bin/bash
+      when: pi_check.rc != 0
+
+- name: Setup claude-code
+  block:
+    - name: Check if claude is installed
+      ansible.builtin.command:
+        argv:
+          - which
+          - claude
+      register: claude_check
+      changed_when: false
+      failed_when: false
+
+    - name: Install claude
+      ansible.builtin.shell: "curl -fsSL {{ claude_install_url }} | sh"
+      args:
+        executable: /bin/bash
+      when: claude_check.rc != 0

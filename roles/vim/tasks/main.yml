@@ -1,0 +1,20 @@
+---
+- name: Setup vim
+  block:
+    - name: Install vim
+      ansible.builtin.package:
+        name: "{{ vim_packages }}"
+        state: present
+      become: true
+
+    - name: Create .config/vim directory
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/vim"
+        state: directory
+        mode: "0755"
+
+    - name: Copy .vimrc
+      ansible.builtin.copy:
+        src: .config/vim/.vimrc
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/vim/.vimrc"
+        backup: true
