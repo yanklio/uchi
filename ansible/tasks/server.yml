@@ -21,9 +21,23 @@
   loop:
     - "{{ homelab_dir }}"
     - "{{ homelab_dir }}/scripts"
+    - "{{ homelab_dir }}/secrets"
+    - "{{ homelab_dir }}/state"
+    - "{{ homelab_dir }}/state/pi-hole/etc-pihole"
+    - "{{ homelab_dir }}/state/pi-hole/etc-dnsmasq.d"
+    - "{{ homelab_dir }}/state/open-webui/data"
+    - "{{ homelab_dir }}/state/hermes/data"
+    - "{{ homelab_dir }}/store"
+    - "{{ homelab_dir }}/store/models/sentence-transformers"
+    - "{{ homelab_dir }}/store/models/tiktoken"
+    - "{{ homelab_dir }}/store/models/whisper"
+    - "{{ homelab_dir }}/store/models/hermes"
+    - "{{ homelab_dir }}/store/browser/playwright"
+    - "{{ homelab_dir }}/backups"
     - "{{ homelab_dir }}/apps/pi-hole"
     - "{{ homelab_dir }}/apps/glance"
     - "{{ homelab_dir }}/apps/open-webui"
+    - "{{ homelab_dir }}/apps/hermes"
 
 - name: Copy homelab CLI scripts
   ansible.builtin.copy:
@@ -45,6 +59,13 @@
     mode: "0600"
     backup: true
 
+- name: Link legacy homelab environment path
+  ansible.builtin.file:
+    src: secrets/homelab.env
+    dest: "{{ homelab_dir }}/.env"
+    state: link
+    force: true
+
 - name: Install nginx homelab config
   ansible.builtin.template:
     src: nginx/homelab.conf.j2
@@ -52,6 +73,18 @@
     mode: "0644"
     backup: true
   register: nginx_config
+  become: true
+
+- name: Remove legacy dotfiles nginx configs
+  ansible.builtin.file:
+    path: "/etc/nginx/conf.d/{{ item }}"
+    state: absent
+  loop:
+    - dotfiles-00-default.conf
+    - dotfiles-chat.localhost.conf
+    - dotfiles-glance.localhost.conf
+    - dotfiles-pihole.localhost.conf
+  register: legacy_nginx_configs
   become: true
 
 - name: Test nginx config
@@ -73,7 +106,7 @@
     state: reloaded
   become: true
   when:
-    - nginx_config.changed
+    - nginx_config.changed or legacy_nginx_configs.changed
     - not ansible_check_mode
 
 - name: Enable podman restart service when available

@@ -2,10 +2,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-
-have() {
-  command -v "$1" >/dev/null 2>&1
-}
+source "$root/scripts/lib.sh"
 
 check_shell() {
   echo "Checking shell syntax..."

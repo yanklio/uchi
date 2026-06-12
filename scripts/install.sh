@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$root/scripts/lib.sh"
+
 dotfiles_repo="${DOTFILES_REPO:-https://github.com/yanklio/dot_uchi.git}"
 dotfiles_dir="${DOTFILES_DIR:-$HOME/Dotfiles}"
 dotfiles_branch="${DOTFILES_BRANCH:-uchi}"
@@ -25,15 +28,11 @@ Options:
 EOF
 }
 
-have() {
-  command -v "$1" >/dev/null 2>&1
-}
-
 as_root() {
   if [[ $EUID -eq 0 ]]; then
     "$@"
   else
-    have sudo || { echo "sudo is required" >&2; exit 1; }
+    require_command sudo "sudo is required"
     sudo "$@"
   fi
 }
@@ -58,7 +57,7 @@ detect_package_manager() {
     auto) ;;
     fedora) package_manager="dnf"; return 0 ;;
     debian | ubuntu) package_manager="apt-get"; return 0 ;;
-    *) echo "Unsupported distro: $distro" >&2; exit 2 ;;
+    *) die "Unsupported distro: $distro" ;;
   esac
 
   if have dnf; then
@@ -66,8 +65,7 @@ detect_package_manager() {
   elif have apt-get; then
     package_manager="apt-get"
   else
-    echo "Neither dnf nor apt-get is available" >&2
-    exit 1
+    die "Neither dnf nor apt-get is available"
   fi
 }
 
@@ -93,8 +91,7 @@ clone_or_update_repo() {
   fi
 
   if [[ -e "$dotfiles_dir" ]]; then
-    echo "Refusing to overwrite existing path: $dotfiles_dir" >&2
-    exit 1
+    die "Refusing to overwrite existing path: $dotfiles_dir"
   fi
 
   echo "Cloning dotfiles..."

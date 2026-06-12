@@ -2,4 +2,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ansible-playbook -i "$root/ansible/hosts.yml" "$root/ansible/site.yml" --limit workstation --ask-become-pass "$@"
+source "$root/scripts/lib.sh"
+
+require_command ansible-playbook "ansible-playbook is required. Run scripts/install.sh first."
+run_ansible "$root" workstation --ask-become-pass "$@"
