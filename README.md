@@ -114,6 +114,12 @@ When migrating from older app-local data folders, run once before recreating con
 ./scripts/containers.sh migrate-state
 ```
 
+If running the homelab CLI directly, use sudo because some legacy state is owned by root or container UIDs:
+
+```bash
+./scripts/containers.sh migrate-state
+```
+
 For external backup windows:
 
 ```bash

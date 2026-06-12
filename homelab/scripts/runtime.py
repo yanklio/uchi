@@ -1,4 +1,5 @@
 import os
+import json
 import shutil
 import subprocess
 import sys
@@ -73,12 +74,34 @@ def load_env() -> dict[str, str]:
     env.setdefault("DHCP_ACTIVE", "false")
     env.setdefault("HOMELAB_APP_BIND", "0.0.0.0")
     env.setdefault("HOMELAB_APPS", ",".join(DEFAULT_APPS))
-    env.setdefault("HOMELAB_TAILNET_MAGICDNS_NAME", env.get("HOMELAB_TAILNET_DNS_SUFFIX", "localhost"))
     return env
 
 
 def selected_apps(env: dict[str, str]) -> list[str]:
     return [app.strip() for app in env.get("HOMELAB_APPS", "").split(",") if app.strip()]
+
+
+def tailscale_magicdns_name() -> str | None:
+    if not shutil.which("tailscale"):
+        return None
+    try:
+        result = subprocess.run(
+            ["tailscale", "status", "--json"],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0:
+        return None
+    try:
+        dns_name = json.loads(result.stdout).get("Self", {}).get("DNSName", "")
+    except json.JSONDecodeError:
+        return None
+    return dns_name.rstrip(".") or None
 
 
 def compose_cmd(action: str) -> list[str]:
@@ -132,7 +155,7 @@ def run_app_action(app: str, action: str, env: dict[str, str]) -> int:
 
 def service_url(app: str, env: dict[str, str]) -> str:
     info = APP_INFO[app]
-    host = env.get("HOMELAB_TAILNET_MAGICDNS_NAME") or env.get("HOMELAB_TAILNET_DNS_SUFFIX") or "localhost"
+    host = env.get("HOMELAB_TAILNET_MAGICDNS_NAME") or tailscale_magicdns_name() or env.get("HOMELAB_TAILNET_DNS_SUFFIX") or "localhost"
     return f"http://{host}:{info.port}{info.path}"
 
 
@@ -176,6 +199,7 @@ def ensure_runtime_dirs(env: dict[str, str]) -> None:
 
 def migrate_state(env: dict[str, str]) -> int:
     status = 0
+    needs_root = False
     for app in selected_apps(env):
         info = APP_INFO.get(app)
         if not info:
@@ -198,8 +222,11 @@ def migrate_state(env: dict[str, str]) -> int:
                 print(f"migrated {app} state: {source} -> {target}")
             except PermissionError:
                 print(f"permission denied migrating {source}", file=sys.stderr)
-                print(f"run: sudo mv {source} {target}", file=sys.stderr)
+                needs_root = True
                 status = 1
+    if needs_root and os.geteuid() != 0:
+        print("rerun migration with root privileges:", file=sys.stderr)
+        print(f"  sudo {ROOT}/scripts/homelab.sh migrate-state", file=sys.stderr)
     return status
 
 

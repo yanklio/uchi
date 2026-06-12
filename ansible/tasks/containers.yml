@@ -21,21 +21,52 @@
 
 - name: Show homelab container status
   ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh status"
+  register: homelab_status_result
+  changed_when: false
+  tags: [never, status]
+
+- name: Show homelab container status output
+  ansible.builtin.debug:
+    msg: "{{ homelab_status_result.stdout_lines + homelab_status_result.stderr_lines }}"
+  when:
+    - homelab_status_result is defined
+    - homelab_status_result.stdout_lines | length > 0 or homelab_status_result.stderr_lines | length > 0
   changed_when: false
   tags: [never, status]
 
 - name: Show homelab URLs
   ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh urls"
+  register: homelab_urls_result
+  changed_when: false
+  tags: [never, urls]
+
+- name: Show homelab URLs output
+  ansible.builtin.debug:
+    msg: "{{ homelab_urls_result.stdout_lines + homelab_urls_result.stderr_lines }}"
+  when:
+    - homelab_urls_result is defined
+    - homelab_urls_result.stdout_lines | length > 0 or homelab_urls_result.stderr_lines | length > 0
   changed_when: false
   tags: [never, urls]
 
 - name: Show homelab state and secret paths
   ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh paths"
+  register: homelab_paths_result
+  changed_when: false
+  tags: [never, paths]
+
+- name: Show homelab state and secret paths output
+  ansible.builtin.debug:
+    msg: "{{ homelab_paths_result.stdout_lines + homelab_paths_result.stderr_lines }}"
+  when:
+    - homelab_paths_result is defined
+    - homelab_paths_result.stdout_lines | length > 0 or homelab_paths_result.stderr_lines | length > 0
   changed_when: false
   tags: [never, paths]
 
 - name: Migrate legacy app-local state into homelab state directory
   ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh migrate-state"
+  become: true
   tags: [never, migrate-state]
 
 - name: Quiesce homelab containers for external backup
@@ -48,6 +79,16 @@
 
 - name: Run homelab doctor
   ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh doctor"
+  register: homelab_doctor_result
+  changed_when: false
+  tags: [never, doctor]
+
+- name: Show homelab doctor output
+  ansible.builtin.debug:
+    msg: "{{ homelab_doctor_result.stdout_lines + homelab_doctor_result.stderr_lines }}"
+  when:
+    - homelab_doctor_result is defined
+    - homelab_doctor_result.stdout_lines | length > 0 or homelab_doctor_result.stderr_lines | length > 0
   changed_when: false
   tags: [never, doctor]
 

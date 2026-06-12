@@ -10,6 +10,11 @@ if ! command -v ansible-playbook >/dev/null 2>&1; then
 fi
 
 case "$action" in
+  urls|paths)
+    shift || true
+    "$root/homelab/scripts/homelab.sh" "$action" "$@"
+    exit 0
+    ;;
   start) tag="start-containers" ;;
   stop) tag="stop-containers" ;;
   restart) tag="restart-containers" ;;
@@ -18,7 +23,10 @@ case "$action" in
   doctor) tag="doctor" ;;
   urls) tag="urls" ;;
   paths) tag="paths" ;;
-  migrate-state) tag="migrate-state" ;;
+  migrate-state)
+    tag="migrate-state"
+    needs_become=1
+    ;;
   quiesce) tag="quiesce" ;;
   resume) tag="resume" ;;
   app)
@@ -47,4 +55,8 @@ case "$action" in
 esac
 
 shift || true
-ansible-playbook -i "$root/ansible/hosts.yml" "$root/ansible/site.yml" --limit server --tags "$tag" "$@"
+args=(-i "$root/ansible/hosts.yml" "$root/ansible/site.yml" --limit server --tags "$tag")
+if [[ "${needs_become:-0}" == "1" ]]; then
+  args+=(--ask-become-pass)
+fi
+ansible-playbook "${args[@]}" "$@"
