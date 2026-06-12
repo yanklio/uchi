@@ -69,7 +69,7 @@ It does not start containers by default.
 ./scripts/containers.sh paths
 ```
 
-Container operations go through Ansible tags, then Ansible calls the homelab CLI. Ansible does not duplicate compose logic.
+Daily container operations call the homelab CLI directly. Setup and privileged one-off operations still go through Ansible when needed. Ansible does not duplicate compose logic.
 
 App-specific maintenance commands use `app <name> <command>`:
 
