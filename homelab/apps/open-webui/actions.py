@@ -4,8 +4,8 @@ from app_commands import AppCommand, AppCommandContext
 
 
 def reset_data(context: AppCommandContext) -> int:
-    data_dir = context.app_dir / "data"
-    backup_dir = context.app_dir / f"data.reset-backup-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    data_dir = context.app_dir.parents[1] / "state" / "open-webui" / "data"
+    backup_dir = context.app_dir.parents[1] / "state" / "open-webui" / f"data.reset-backup-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
 
     status = context.run_app_action(context.app, "stop", context.env)
     if status != 0:

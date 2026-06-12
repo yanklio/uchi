@@ -21,6 +21,19 @@
   loop:
     - "{{ homelab_dir }}"
     - "{{ homelab_dir }}/scripts"
+    - "{{ homelab_dir }}/secrets"
+    - "{{ homelab_dir }}/state"
+    - "{{ homelab_dir }}/state/pi-hole/etc-pihole"
+    - "{{ homelab_dir }}/state/pi-hole/etc-dnsmasq.d"
+    - "{{ homelab_dir }}/state/open-webui/data"
+    - "{{ homelab_dir }}/state/hermes/data"
+    - "{{ homelab_dir }}/store"
+    - "{{ homelab_dir }}/store/models/sentence-transformers"
+    - "{{ homelab_dir }}/store/models/tiktoken"
+    - "{{ homelab_dir }}/store/models/whisper"
+    - "{{ homelab_dir }}/store/models/hermes"
+    - "{{ homelab_dir }}/store/browser/playwright"
+    - "{{ homelab_dir }}/backups"
     - "{{ homelab_dir }}/apps/pi-hole"
     - "{{ homelab_dir }}/apps/glance"
     - "{{ homelab_dir }}/apps/open-webui"
@@ -45,6 +58,13 @@
     dest: "{{ homelab_env_file }}"
     mode: "0600"
     backup: true
+
+- name: Link legacy homelab environment path
+  ansible.builtin.file:
+    src: secrets/homelab.env
+    dest: "{{ homelab_dir }}/.env"
+    state: link
+    force: true
 
 - name: Install nginx homelab config
   ansible.builtin.template:

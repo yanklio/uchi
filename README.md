@@ -54,7 +54,7 @@ Run setup from an existing clone:
 ./scripts/server.sh
 ```
 
-Server setup installs packages, writes `homelab/.env`, manages nginx, enables nginx, checks Podman restart support, and runs `homelab/scripts/homelab.sh doctor`.
+Server setup installs packages, writes `homelab/secrets/homelab.env`, links `homelab/.env` for compose compatibility, manages nginx, enables nginx, checks Podman restart support, and runs `homelab/scripts/homelab.sh doctor`.
 
 It does not start containers by default.
 
@@ -63,7 +63,10 @@ It does not start containers by default.
 ```bash
 ./scripts/containers.sh start
 ./scripts/containers.sh restart
+./scripts/containers.sh recreate
 ./scripts/containers.sh status
+./scripts/containers.sh urls
+./scripts/containers.sh paths
 ```
 
 Container operations go through Ansible tags, then Ansible calls the homelab CLI. Ansible does not duplicate compose logic.
@@ -77,7 +80,59 @@ App-specific maintenance commands use `app <name> <command>`:
 
 `open-webui reset-data` is registered in `homelab/apps/open-webui/actions.py`. The homelab CLI loads app commands through `homelab/scripts/app_commands.py` and runs compose operations through `homelab/scripts/runtime.py`.
 
-The command stops Open WebUI, moves `homelab/apps/open-webui/data` to a timestamped backup directory, creates a fresh data directory, and starts Open WebUI again.
+The command stops Open WebUI, moves `homelab/state/open-webui/data` to a timestamped backup directory, creates a fresh data directory, and starts Open WebUI again.
+
+## Homelab State
+
+Tracked Git files define configuration and orchestration. Runtime data and secrets live in stable ignored directories so external backup tools can back them up without understanding app internals:
+
+```text
+homelab/secrets/  # credentials and generated environment files
+homelab/state/    # persistent app data, externally backed up
+homelab/store/    # shared models, browser downloads, and heavyweight caches
+homelab/backups/  # manual/export scratch space
+```
+
+External backup should include:
+
+```text
+homelab/secrets/
+homelab/state/
+```
+
+`homelab/store/` is optional because it is intended for large reusable caches and model downloads.
+
+After changing compose files or environment values, use `recreate` so containers pick up the new config:
+
+```bash
+./scripts/containers.sh recreate
+```
+
+When migrating from older app-local data folders, run once before recreating containers:
+
+```bash
+./scripts/containers.sh migrate-state
+```
+
+For external backup windows:
+
+```bash
+./scripts/containers.sh quiesce
+# run external backup of homelab/secrets and homelab/state
+./scripts/containers.sh resume
+```
+
+Recovery on a rebuilt server:
+
+```bash
+git clone <repo> ~/Dotfiles
+cd ~/Dotfiles
+./scripts/server.sh
+# restore homelab/secrets and homelab/state with the external backup tool
+./scripts/containers.sh doctor
+./scripts/containers.sh recreate
+./scripts/containers.sh urls
+```
 
 ## Validation
 
@@ -92,4 +147,4 @@ The command stops Open WebUI, moves `homelab/apps/open-webui/data` to a timestam
 - `DHCP_ACTIVE=false` is the safe default.
 - Pi-hole DHCP is only enabled if explicitly set in `ansible/vars.yml`.
 - Pi-hole is included in container operations, but DHCP stays disabled unless explicitly enabled.
-- Container image tags are pinned through `ansible/vars.yml` and `homelab/.env`.
+- Container image tags are pinned through `ansible/vars.yml` and `homelab/secrets/homelab.env`.

@@ -3,7 +3,7 @@ dotfiles_source_dir: "{{ playbook_dir }}/.."
 dotfiles_repo_dir: "{{ ansible_env.HOME }}/Dotfiles"
 dotfiles_home_dir: "{{ dotfiles_source_dir }}/home"
 homelab_dir: "{{ dotfiles_repo_dir }}/homelab"
-homelab_env_file: "{{ homelab_dir }}/.env"
+homelab_env_file: "{{ homelab_dir }}/secrets/homelab.env"
 
 common_packages:
   - git

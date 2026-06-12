@@ -4,7 +4,19 @@ import sys
 from app_commands import run_app_command
 from runtime import doctor, load_env, operate
 
-VALID_ACTIONS = {"start", "stop", "restart", "status", "doctor"}
+VALID_ACTIONS = {
+    "start",
+    "stop",
+    "restart",
+    "recreate",
+    "status",
+    "doctor",
+    "urls",
+    "paths",
+    "migrate-state",
+    "quiesce",
+    "resume",
+}
 
 
 def main() -> int:
@@ -18,7 +30,7 @@ def main() -> int:
         return run_app_command(sys.argv[2], command, env)
     if action not in VALID_ACTIONS:
         print(
-            f"Usage: {sys.argv[0]} start|stop|restart|status|doctor|app <app> <command>",
+            f"Usage: {sys.argv[0]} start|stop|restart|recreate|status|doctor|urls|paths|migrate-state|quiesce|resume|app <app> <command>",
             file=sys.stderr,
         )
         return 2

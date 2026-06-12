@@ -15,10 +15,36 @@
   ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh restart"
   tags: [never, restart-containers]
 
+- name: Recreate homelab containers
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh recreate"
+  tags: [never, recreate-containers]
+
 - name: Show homelab container status
   ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh status"
   changed_when: false
   tags: [never, status]
+
+- name: Show homelab URLs
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh urls"
+  changed_when: false
+  tags: [never, urls]
+
+- name: Show homelab state and secret paths
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh paths"
+  changed_when: false
+  tags: [never, paths]
+
+- name: Migrate legacy app-local state into homelab state directory
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh migrate-state"
+  tags: [never, migrate-state]
+
+- name: Quiesce homelab containers for external backup
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh quiesce"
+  tags: [never, quiesce]
+
+- name: Resume homelab containers after external backup
+  ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh resume"
+  tags: [never, resume]
 
 - name: Run homelab doctor
   ansible.builtin.command: "{{ homelab_dir }}/scripts/homelab.sh doctor"

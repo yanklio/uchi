@@ -13,8 +13,14 @@ case "$action" in
   start) tag="start-containers" ;;
   stop) tag="stop-containers" ;;
   restart) tag="restart-containers" ;;
+  recreate) tag="recreate-containers" ;;
   status) tag="status" ;;
   doctor) tag="doctor" ;;
+  urls) tag="urls" ;;
+  paths) tag="paths" ;;
+  migrate-state) tag="migrate-state" ;;
+  quiesce) tag="quiesce" ;;
+  resume) tag="resume" ;;
   app)
     app="${2:-}"
     command="${3:-list}"
@@ -35,7 +41,7 @@ case "$action" in
     exit 0
     ;;
   *)
-    echo "Usage: $0 start|stop|restart|status|doctor|app <app> [command]" >&2
+    echo "Usage: $0 start|stop|restart|recreate|status|doctor|urls|paths|migrate-state|quiesce|resume|app <app> [command]" >&2
     exit 2
     ;;
 esac

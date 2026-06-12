@@ -5,7 +5,9 @@ from app_commands import AppCommandContext
 
 def setup(context: AppCommandContext) -> int:
     command = ["podman", "compose"]
-    env_file = context.app_dir.parents[1] / ".env"
+    env_file = context.app_dir.parents[1] / "secrets" / "homelab.env"
+    if not env_file.exists():
+        env_file = context.app_dir.parents[1] / ".env"
     if env_file.exists():
         command += ["--env-file", str(env_file)]
     command += ["run", "--rm", "hermes", "setup"]

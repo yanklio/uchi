@@ -10,5 +10,8 @@ services:
       ENABLE_RAG_WEB_LOADER_SSL_VERIFICATION: "False"
       RAG_EMBEDDING_ENGINE: ""
     volumes:
-      - ./data:/app/backend/data:z
+      - ../../state/open-webui/data:/app/backend/data:z
+      - ../../store/models/sentence-transformers:/app/backend/data/cache/embedding/models:z
+      - ../../store/models/tiktoken:/app/backend/data/cache/tiktoken:z
+      - ../../store/models/whisper:/app/backend/data/cache/whisper/models:z
     restart: unless-stopped

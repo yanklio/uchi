@@ -22,6 +22,6 @@ services:
       FTLCONF_dhcp_leaseTime: ${DHCP_LEASE_TIME:-24h}
       PIHOLE_DOMAIN: ${PIHOLE_DOMAIN:-local}
     volumes:
-      - ./etc-pihole:/etc/pihole:z
-      - ./etc-dnsmasq.d:/etc/dnsmasq.d:z
+      - ../../state/pi-hole/etc-pihole:/etc/pihole:z
+      - ../../state/pi-hole/etc-dnsmasq.d:/etc/dnsmasq.d:z
     restart: unless-stopped
