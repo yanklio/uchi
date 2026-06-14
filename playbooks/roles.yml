@@ -3,7 +3,7 @@
   hosts: all
   tags: [base]
   roles:
-    - base
+    - _base
 
 - name: zsh
   hosts: all
@@ -87,10 +87,22 @@
   hosts: server
   tags: [nginx]
   roles:
-    - nginx
+    - _nginx
 
 - name: glance
   hosts: server
   tags: [glance]
   roles:
     - glance
+
+- name: hermes
+  hosts: server
+  tags: [hermes]
+  roles:
+    - hermes
+
+- name: openwebui
+  hosts: server
+  tags: [openwebui]
+  roles:
+    - openwebui

@@ -14,6 +14,13 @@
         mode: "0755"
       become: true
 
+    - name: Remove legacy combined homelab nginx config
+      ansible.builtin.file:
+        path: /etc/nginx/conf.d/homelab.conf
+        state: absent
+      become: true
+      notify: reload nginx
+
     - name: Enable and start nginx
       ansible.builtin.service:
         name: nginx

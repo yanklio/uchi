@@ -1,9 +1,11 @@
 server {
-    listen {{ nginx_listen_port | default('80') }};
-    server_name glance.localhost glance.{{ homelab_domain | default('home') }} glance.{{ homelab_tailnet_dns_suffix | default('') }};
+{% for port in glance_nginx_ports | unique %}
+    listen {{ port }};
+{% endfor %}
+    server_name glance.localhost glance.{{ homelab_domain | default('home') }}{% if homelab_tailnet_dns_suffix | default('') %} glance.{{ homelab_tailnet_dns_suffix }}{% endif %};
 
     location / {
-        proxy_pass http://127.0.0.1:{{ glance_port }};
+        proxy_pass http://127.0.0.1:{{ glance_backend_port }};
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

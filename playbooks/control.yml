@@ -3,4 +3,4 @@
   hosts: server
   tags: [control]
   roles:
-    - control
+    - _control

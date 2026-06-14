@@ -1,0 +1,10 @@
+---
+openwebui_image: ghcr.io/open-webui/open-webui:v0.6.26
+openwebui_app_dir: "{{ ansible_facts['env']['HOME'] }}/serve"
+openwebui_bind: "{{ homelab_app_bind | default('127.0.0.1') }}"
+openwebui_port: 13000
+openwebui_nginx_port: 3000
+openwebui_ollama_base_url: "{{ ollama_base_url | default('http://127.0.0.1:11434') }}"
+openwebui_name: Homelab Chat
+openwebui_enable_rag_web_loader_ssl_verification: false
+openwebui_rag_embedding_engine: ""

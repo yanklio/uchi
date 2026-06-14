@@ -3,7 +3,7 @@
   hosts: all
   tags: [core, workstation, server]
   roles:
-    - base
+    - _base
     - zsh
     - tmux
     - vim
@@ -27,5 +27,7 @@
   hosts: server
   tags: [server]
   roles:
-    - nginx
+    - _nginx
     - glance
+    - hermes
+    - openwebui
