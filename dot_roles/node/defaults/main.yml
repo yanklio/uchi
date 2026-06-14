@@ -4,5 +4,6 @@ node_packages:
 
 node_npm_packages:
   - yarn
+  - deno
 
 node_npm_prefix: "{{ ansible_facts['env']['HOME'] }}/.local"
