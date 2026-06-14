@@ -1,0 +1,26 @@
+services:
+  hermes:
+    image: {{ hermes_image }}
+    container_name: hermes
+    command:
+      - gateway
+      - run
+    ports:
+      - "{{ hermes_gateway_bind }}:{{ hermes_gateway_backend_port }}:{{ hermes_gateway_port }}"
+{% if hermes_nginx_enabled | bool %}
+      - "127.0.0.1:{{ hermes_dashboard_backend_port }}:9119"
+{% else %}
+      - "{{ hermes_dashboard_bind }}:{{ hermes_dashboard_port }}:9119"
+{% endif %}
+    environment:
+      HERMES_DASHBOARD: "{{ '1' if hermes_dashboard_enabled else '0' }}"
+      HERMES_DASHBOARD_INSECURE: "{{ '1' if hermes_dashboard_insecure else '0' }}"
+      HERMES_DASHBOARD_BASIC_AUTH_USERNAME: "{{ hermes_dashboard_basic_auth_username }}"
+      HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: "{{ hermes_dashboard_basic_auth_password }}"
+      HERMES_DASHBOARD_BASIC_AUTH_SECRET: "{{ hermes_dashboard_basic_auth_secret }}"
+    volumes:
+      - ../../state/hermes/data:/opt/data:z
+      - ../../store/browser/playwright:/opt/hermes/.playwright:z
+      - ../../store/models/hermes:/opt/models:z
+    shm_size: 1g
+    restart: unless-stopped

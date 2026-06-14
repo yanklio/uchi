@@ -1,0 +1,4 @@
+---
+dependencies:
+  - role: _nginx_handlers
+    tags: always
