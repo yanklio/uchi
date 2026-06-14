@@ -1,0 +1,5 @@
+---
+skip_list:
+  - command-instead-of-module
+  - no-changed-when
+  - no-handler

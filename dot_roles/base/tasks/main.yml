@@ -1,0 +1,80 @@
+---
+- name: Setup base packages
+  block:
+    - name: Load OS-specific variables
+      ansible.builtin.include_vars: "{{ ansible_facts['os_family'] }}.yml"
+
+    - name: Install common packages
+      ansible.builtin.package:
+        name: "{{ base_packages + base_extra_packages }}"
+        state: present
+      become: true
+
+- name: Setup git config
+  block:
+    - name: Copy .gitconfig
+      ansible.builtin.copy:
+        src: .gitconfig
+        dest: "{{ ansible_facts['env']['HOME'] }}/.gitconfig"
+        backup: true
+
+    - name: Set git user name
+      ansible.builtin.command:
+        argv:
+          - git
+          - config
+          - --global
+          - user.name
+          - "{{ git_user_name }}"
+      changed_when: false
+
+    - name: Set git user email
+      ansible.builtin.command:
+        argv:
+          - git
+          - config
+          - --global
+          - user.email
+          - "{{ git_user_email }}"
+      changed_when: false
+
+- name: Setup SSH key
+  block:
+    - name: Create .ssh directory
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.ssh"
+        state: directory
+        mode: "0700"
+
+    - name: Check if SSH key exists
+      ansible.builtin.stat:
+        path: "{{ ansible_facts['env']['HOME'] }}/.ssh/id_ed25519"
+      register: ssh_key
+
+    - name: Generate ed25519 SSH key
+      ansible.builtin.command:
+        argv:
+          - ssh-keygen
+          - -t
+          - ed25519
+          - -C
+          - "{{ git_user_email }}"
+          - -f
+          - "{{ ansible_facts['env']['HOME'] }}/.ssh/id_ed25519"
+          - -N
+          - ""
+      when: not ssh_key.stat.exists
+
+- name: Setup fastfetch config
+  block:
+    - name: Create .config/fastfetch directory
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/fastfetch"
+        state: directory
+        mode: "0755"
+
+    - name: Copy fastfetch config
+      ansible.builtin.copy:
+        src: .config/fastfetch/config.jsonc
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/fastfetch/config.jsonc"
+        backup: true

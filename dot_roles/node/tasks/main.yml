@@ -1,0 +1,28 @@
+---
+- name: Setup node
+  block:
+    - name: Add NodeSource 22.x repo for Debian
+      ansible.builtin.shell:
+        cmd: "curl -fsSL https://deb.nodesource.com/setup_22.x | bash -"
+        executable: /bin/bash
+      become: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install nodejs
+      ansible.builtin.package:
+        name: "{{ node_packages }}"
+        state: present
+      become: true
+
+    - name: Install npm global packages
+      ansible.builtin.command:
+        argv:
+          - npm
+          - install
+          - --global
+          - --force
+          - --prefix
+          - "{{ node_npm_prefix }}"
+          - "{{ item }}"
+      loop: "{{ node_npm_packages }}"
+      changed_when: false

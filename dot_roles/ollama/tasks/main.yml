@@ -1,0 +1,26 @@
+---
+- name: Setup ollama
+  block:
+    - name: Check if ollama is installed
+      ansible.builtin.command:
+        argv:
+          - which
+          - ollama
+      register: ollama_check
+      changed_when: false
+      failed_when: false
+
+    - name: Install ollama
+      ansible.builtin.shell: "curl -fsSL {{ ollama_install_url }} | sh"
+      args:
+        executable: /bin/bash
+      become: true
+      when: ollama_check.rc != 0
+
+    - name: Enable ollama service
+      ansible.builtin.systemd:
+        name: ollama
+        enabled: true
+        state: started
+      become: true
+      failed_when: false

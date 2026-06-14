@@ -1,0 +1,6 @@
+---
+- name: "Control containers"
+  hosts: server
+  tags: [control]
+  roles:
+    - control

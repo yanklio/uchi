@@ -1,0 +1,75 @@
+---
+- name: Setup opencode
+  block:
+    - name: Install opencode
+      ansible.builtin.command:
+        argv:
+          - npm
+          - install
+          - --global
+          - --prefix
+          - "{{ opencode_prefix }}"
+          - opencode-linux-x64-baseline
+        creates: "{{ opencode_prefix }}/lib/node_modules/opencode-linux-x64-baseline"
+
+    - name: Create .config/opencode directory
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/opencode"
+        state: directory
+        mode: "0755"
+
+    - name: Copy opencode config
+      ansible.builtin.copy:
+        src: .config/opencode/
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/opencode/"
+        backup: true
+
+    - name: Ensure opencode CLI symlink
+      ansible.builtin.file:
+        src: "{{ opencode_prefix }}/lib/node_modules/opencode-linux-x64-baseline/bin/opencode"
+        dest: "{{ opencode_prefix }}/bin/opencode"
+        state: link
+
+- name: Setup pi-agent
+  block:
+    - name: Check if pi is installed
+      ansible.builtin.stat:
+        path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/pi"
+      register: pi_check
+
+    - name: Install pi agent
+      ansible.builtin.command:
+        argv:
+          - npm
+          - install
+          - -g
+          - --ignore-scripts
+          - --prefix
+          - "{{ opencode_prefix }}"
+          - "@earendil-works/pi-coding-agent"
+        creates: "{{ opencode_prefix }}/lib/node_modules/@earendil-works/pi-coding-agent"
+      when: not pi_check.stat.exists
+
+- name: Setup claude-code
+  block:
+    - name: Check if claude is installed
+      ansible.builtin.command:
+        argv:
+          - which
+          - claude
+      register: claude_check
+      changed_when: false
+      failed_when: false
+
+    - name: Download claude install script
+      ansible.builtin.get_url:
+        url: "{{ claude_install_url }}"
+        dest: /tmp/claude-install.sh
+        mode: "0755"
+
+    - name: Install claude
+      ansible.builtin.command:
+        argv:
+          - bash
+          - /tmp/claude-install.sh
+      when: claude_check.rc != 0

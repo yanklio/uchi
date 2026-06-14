@@ -11,6 +11,7 @@
     - lazygit
     - node
     - ai-tools
+    - ollama
     - tailscale
     - podman
     - gh
@@ -21,3 +22,10 @@
   roles:
     - zed
     - flatpak
+
+- name: Apply server tools
+  hosts: server
+  tags: [server]
+  roles:
+    - nginx
+    - glance

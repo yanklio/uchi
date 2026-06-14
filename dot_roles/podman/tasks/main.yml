@@ -1,0 +1,22 @@
+---
+- name: Setup podman
+  block:
+    - name: Install podman
+      ansible.builtin.package:
+        name: "{{ podman_packages }}"
+        state: present
+      become: true
+
+    - name: Enable lingering for user
+      ansible.builtin.command:
+        argv: [loginctl, enable-linger, "{{ ansible_facts['env']['USER'] }}"]
+      become: true
+      changed_when: false
+
+    - name: Enable podman socket
+      ansible.builtin.systemd:
+        name: podman.socket
+        scope: user
+        enabled: true
+        state: started
+      failed_when: false

@@ -1,0 +1,8 @@
+---
+- ansible.builtin.include_tasks: common.yml
+
+- name: "Stop all containers"
+  ansible.builtin.command:
+    argv: [podman, compose, down]
+    chdir: "{{ control_homelab_dir }}/apps/{{ item }}"
+  loop: "{{ _app_list }}"

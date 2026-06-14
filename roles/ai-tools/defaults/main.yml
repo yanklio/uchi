@@ -1,5 +1,0 @@
----
-ollama_install_url: https://ollama.com/install.sh
-pi_agent_install_url: https://pi.dev/install.sh
-claude_install_url: https://claude.ai/install.sh
-opencode_prefix: "{{ ansible_facts['env']['HOME'] }}/.local"

@@ -1,0 +1,15 @@
+---
+- ansible.builtin.include_tasks: common.yml
+
+- name: "Get container status"
+  ansible.builtin.command:
+    argv: [podman, compose, ps]
+    chdir: "{{ control_homelab_dir }}/apps/{{ item }}"
+  loop: "{{ _app_list }}"
+  register: _status
+  changed_when: false
+
+- name: "Show container status"
+  ansible.builtin.debug:
+    msg: "{{ item.stdout }}"
+  loop: "{{ _status.results }}"

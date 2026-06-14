@@ -1,0 +1,22 @@
+---
+- name: Setup nginx
+  block:
+    - name: Install nginx
+      ansible.builtin.package:
+        name: nginx
+        state: present
+      become: true
+
+    - name: Ensure nginx conf.d directory
+      ansible.builtin.file:
+        path: /etc/nginx/conf.d
+        state: directory
+        mode: "0755"
+      become: true
+
+    - name: Enable and start nginx
+      ansible.builtin.service:
+        name: nginx
+        enabled: true
+        state: started
+      become: true

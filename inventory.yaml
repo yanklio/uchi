@@ -13,4 +13,3 @@ server:
       ansible_user: yanklio
       ansible_connection: ssh
       ansible_python_interpreter: /usr/bin/python3
-      ansible_become: true
