@@ -1,14 +1,14 @@
 ---
 - name: Setup hermes app directory
   ansible.builtin.file:
-    path: "{{ hermes_app_dir }}/apps/hermes"
+    path: "{{ ansible_facts['env']['HOME'] }}/serve/apps/hermes"
     state: directory
     mode: "0755"
 
 - name: Template hermes docker-compose.yml
   ansible.builtin.template:
     src: docker-compose.yml.j2
-    dest: "{{ hermes_app_dir }}/apps/hermes/docker-compose.yml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/serve/apps/hermes/docker-compose.yml"
     mode: "0644"
 
 - name: Install hermes nginx config

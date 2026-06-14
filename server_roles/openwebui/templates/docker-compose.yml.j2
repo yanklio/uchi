@@ -3,12 +3,12 @@ services:
     image: {{ openwebui_image }}
     network_mode: host
     environment:
-      HOST: "{{ openwebui_bind }}"
-      PORT: "{{ openwebui_port }}"
-      OLLAMA_BASE_URL: "{{ openwebui_ollama_base_url }}"
+      HOST: "127.0.0.1"
+      PORT: "13000"
+      OLLAMA_BASE_URL: "{{ ollama_base_url | default('http://127.0.0.1:11434') }}"
       WEBUI_NAME: "{{ openwebui_name }}"
-      ENABLE_RAG_WEB_LOADER_SSL_VERIFICATION: "{{ openwebui_enable_rag_web_loader_ssl_verification | string }}"
-      RAG_EMBEDDING_ENGINE: "{{ openwebui_rag_embedding_engine }}"
+      ENABLE_RAG_WEB_LOADER_SSL_VERIFICATION: "false"
+      RAG_EMBEDDING_ENGINE: ""
     volumes:
       - ../../state/open-webui/data:/app/backend/data:z
       - ../../store/models/sentence-transformers:/app/backend/data/cache/embedding/models:z

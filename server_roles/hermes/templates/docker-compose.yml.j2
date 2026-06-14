@@ -6,18 +6,18 @@ services:
       - gateway
       - run
     ports:
-      - "{{ hermes_gateway_bind }}:{{ hermes_gateway_backend_port }}:{{ hermes_gateway_port }}"
+      - "127.0.0.1:18642:8642"
 {% if hermes_nginx_enabled | bool %}
-      - "127.0.0.1:{{ hermes_dashboard_backend_port }}:9119"
+      - "127.0.0.1:19119:9119"
 {% else %}
-      - "{{ hermes_dashboard_bind }}:{{ hermes_dashboard_port }}:9119"
+      - "0.0.0.0:{{ hermes_dashboard_port }}:9119"
 {% endif %}
     environment:
-      HERMES_DASHBOARD: "{{ '1' if hermes_dashboard_enabled else '0' }}"
+      HERMES_DASHBOARD: "1"
       HERMES_DASHBOARD_INSECURE: "{{ '1' if hermes_dashboard_insecure else '0' }}"
-      HERMES_DASHBOARD_BASIC_AUTH_USERNAME: "{{ hermes_dashboard_basic_auth_username }}"
-      HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: "{{ hermes_dashboard_basic_auth_password }}"
-      HERMES_DASHBOARD_BASIC_AUTH_SECRET: "{{ hermes_dashboard_basic_auth_secret }}"
+      HERMES_DASHBOARD_BASIC_AUTH_USERNAME: "{{ lookup('ansible.builtin.env', 'HERMES_DASHBOARD_BASIC_AUTH_USERNAME', default='') }}"
+      HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: "{{ lookup('ansible.builtin.env', 'HERMES_DASHBOARD_BASIC_AUTH_PASSWORD', default='') }}"
+      HERMES_DASHBOARD_BASIC_AUTH_SECRET: "{{ lookup('ansible.builtin.env', 'HERMES_DASHBOARD_BASIC_AUTH_SECRET', default='') }}"
     volumes:
       - ../../state/hermes/data:/opt/data:z
       - ../../store/browser/playwright:/opt/hermes/.playwright:z

@@ -2,7 +2,7 @@ services:
   glance:
     image: {{ glance_image }}
     ports:
-      - "{{ glance_bind }}:{{ glance_backend_port }}:{{ glance_port }}"
+      - "127.0.0.1:18080:8080"
     volumes:
       - ./glance.yml:/app/config/glance.yml
     restart: unless-stopped

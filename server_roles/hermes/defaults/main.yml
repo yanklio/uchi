@@ -1,16 +1,5 @@
 ---
 hermes_image: docker.io/nousresearch/hermes-agent:latest
-hermes_app_dir: "{{ ansible_facts['env']['HOME'] }}/serve"
-hermes_gateway_bind: "{{ homelab_app_bind | default('127.0.0.1') }}"
-hermes_dashboard_bind: "{{ homelab_dashboard_bind | default('0.0.0.0') }}"
-hermes_gateway_port: 8642
 hermes_dashboard_port: 9119
-hermes_gateway_backend_port: 18642
-hermes_dashboard_backend_port: 19119
-hermes_dashboard_enabled: true
 hermes_dashboard_insecure: true
 hermes_nginx_enabled: false
-hermes_nginx_port: "{{ hermes_dashboard_port }}"
-hermes_dashboard_basic_auth_username: "{{ lookup('ansible.builtin.env', 'HERMES_DASHBOARD_BASIC_AUTH_USERNAME', default='') }}"
-hermes_dashboard_basic_auth_password: "{{ lookup('ansible.builtin.env', 'HERMES_DASHBOARD_BASIC_AUTH_PASSWORD', default='') }}"
-hermes_dashboard_basic_auth_secret: "{{ lookup('ansible.builtin.env', 'HERMES_DASHBOARD_BASIC_AUTH_SECRET', default='') }}"
