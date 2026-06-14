@@ -1,0 +1,29 @@
+---
+- name: Setup hermes app directory
+  ansible.builtin.file:
+    path: "{{ ansible_facts['env']['HOME'] }}/serve/apps/hermes"
+    state: directory
+    mode: "0755"
+
+- name: Template hermes docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ ansible_facts['env']['HOME'] }}/serve/apps/hermes/docker-compose.yml"
+    mode: "0644"
+
+- name: Install hermes nginx config
+  ansible.builtin.template:
+    src: nginx-hermes.conf.j2
+    dest: /etc/nginx/conf.d/hermes.conf
+    mode: "0644"
+  become: true
+  when: hermes_nginx_enabled | bool
+  notify: reload nginx
+
+- name: Remove hermes nginx config when disabled
+  ansible.builtin.file:
+    path: /etc/nginx/conf.d/hermes.conf
+    state: absent
+  become: true
+  when: not (hermes_nginx_enabled | bool)
+  notify: reload nginx

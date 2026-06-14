@@ -1,0 +1,5 @@
+---
+hermes_image: docker.io/nousresearch/hermes-agent:latest
+hermes_dashboard_port: 9119
+hermes_dashboard_insecure: true
+hermes_nginx_enabled: false

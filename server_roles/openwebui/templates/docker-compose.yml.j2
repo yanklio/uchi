@@ -1,0 +1,17 @@
+services:
+  open-webui:
+    image: {{ openwebui_image }}
+    network_mode: host
+    environment:
+      HOST: "127.0.0.1"
+      PORT: "13000"
+      OLLAMA_BASE_URL: "{{ ollama_base_url | default('http://127.0.0.1:11434') }}"
+      WEBUI_NAME: "{{ openwebui_name }}"
+      ENABLE_RAG_WEB_LOADER_SSL_VERIFICATION: "false"
+      RAG_EMBEDDING_ENGINE: ""
+    volumes:
+      - ../../state/open-webui/data:/app/backend/data:z
+      - ../../store/models/sentence-transformers:/app/backend/data/cache/embedding/models:z
+      - ../../store/models/tiktoken:/app/backend/data/cache/tiktoken:z
+      - ../../store/models/whisper:/app/backend/data/cache/whisper/models:z
+    restart: unless-stopped

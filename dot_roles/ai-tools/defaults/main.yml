@@ -1,0 +1,4 @@
+---
+claude_install_url: https://claude.ai/install.sh
+pi_agent_install_url: https://pi.dev/install.sh
+opencode_prefix: "{{ ansible_facts['env']['HOME'] }}/.local"

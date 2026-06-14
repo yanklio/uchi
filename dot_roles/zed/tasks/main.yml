@@ -1,0 +1,29 @@
+---
+- name: Setup zed
+  block:
+    - name: Check if zed is installed
+      ansible.builtin.command:
+        argv:
+          - which
+          - zed
+      register: zed_check
+      changed_when: false
+      failed_when: false
+
+    - name: Install zed
+      ansible.builtin.shell: "curl -fsSL {{ zed_install_url }} | sh"
+      args:
+        executable: /bin/bash
+      when: zed_check.rc != 0
+
+    - name: Create .config/zed directory
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/zed"
+        state: directory
+        mode: "0755"
+
+    - name: Copy zed config
+      ansible.builtin.copy:
+        src: .config/zed/private_settings.json
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/zed/private_settings.json"
+        backup: true

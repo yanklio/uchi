@@ -1,0 +1,20 @@
+---
+- name: Setup tmux
+  block:
+    - name: Install tmux
+      ansible.builtin.package:
+        name: "{{ tmux_packages }}"
+        state: present
+      become: true
+
+    - name: Create .config/tmux directory
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/tmux"
+        state: directory
+        mode: "0755"
+
+    - name: Copy tmux config
+      ansible.builtin.copy:
+        src: .config/tmux/tmux.conf
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/tmux/tmux.conf"
+        backup: true

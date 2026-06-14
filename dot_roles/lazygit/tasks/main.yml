@@ -1,0 +1,10 @@
+---
+- name: Setup lazygit
+  block:
+    - name: Install lazygit
+      ansible.builtin.command:
+        argv:
+          - go
+          - install
+          - "{{ lazygit_go_package }}"
+        creates: "{{ ansible_facts['env']['HOME'] }}/go/bin/lazygit"

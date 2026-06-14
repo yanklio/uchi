@@ -1,0 +1,19 @@
+---
+base_packages:
+  - git
+  - curl
+  - ca-certificates
+  - fzf
+  - ripgrep
+  - gcc
+  - python3
+  - htop
+  - stow
+  - bat
+  - btop
+  - fastfetch
+
+base_extra_packages: []
+
+git_user_name: yanklio
+git_user_email: y.ustinov2004@gmail.com

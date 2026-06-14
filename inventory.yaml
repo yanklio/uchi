@@ -1,0 +1,15 @@
+# Base setup for local workstation and server
+
+workstation:
+  hosts:
+    xs-ea:
+      ansible_connection: local
+      ansible_user: yanklio
+      ansible_python_interpreter: /usr/bin/python3
+server:
+  hosts:
+    gmk-de:
+      ansible_host: gmk-de
+      ansible_user: yanklio
+      ansible_connection: ssh
+      ansible_python_interpreter: /usr/bin/python3

@@ -1,0 +1,4 @@
+---
+control_homelab_dir: "{{ ansible_facts['env']['HOME'] }}/serve"
+control_action: status
+control_app: all

@@ -1,0 +1,108 @@
+---
+- name: base
+  hosts: all
+  tags: [base]
+  roles:
+    - _base
+
+- name: zsh
+  hosts: all
+  tags: [zsh]
+  roles:
+    - zsh
+
+- name: tmux
+  hosts: all
+  tags: [tmux]
+  roles:
+    - tmux
+
+- name: vim
+  hosts: all
+  tags: [vim]
+  roles:
+    - vim
+
+- name: neovim
+  hosts: all
+  tags: [neovim]
+  roles:
+    - neovim
+
+- name: lazygit
+  hosts: all
+  tags: [lazygit]
+  roles:
+    - lazygit
+
+- name: node
+  hosts: all
+  tags: [node]
+  roles:
+    - node
+
+- name: ai-tools
+  hosts: all
+  tags: [ai-tools]
+  roles:
+    - ai-tools
+
+- name: ollama
+  hosts: all
+  tags: [ollama]
+  roles:
+    - ollama
+
+- name: tailscale
+  hosts: all
+  tags: [tailscale]
+  roles:
+    - tailscale
+
+- name: podman
+  hosts: all
+  tags: [podman]
+  roles:
+    - podman
+
+- name: gh
+  hosts: all
+  tags: [gh]
+  roles:
+    - gh
+
+- name: zed
+  hosts: workstation
+  tags: [zed]
+  roles:
+    - zed
+
+- name: flatpak
+  hosts: workstation
+  tags: [flatpak]
+  roles:
+    - flatpak
+
+- name: nginx
+  hosts: server
+  tags: [nginx]
+  roles:
+    - _nginx
+
+- name: glance
+  hosts: server
+  tags: [glance]
+  roles:
+    - glance
+
+- name: hermes
+  hosts: server
+  tags: [hermes]
+  roles:
+    - hermes
+
+- name: openwebui
+  hosts: server
+  tags: [openwebui]
+  roles:
+    - openwebui

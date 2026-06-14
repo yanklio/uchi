@@ -1,0 +1,13 @@
+---
+- name: Discover app directories
+  ansible.builtin.find:
+    path: "{{ control_homelab_dir }}/apps"
+    recurse: false
+    file_type: directory
+  register: _apps_found
+
+- name: Build app target list
+  ansible.builtin.set_fact:
+    _app_list: >-
+      {{ (_apps_found.files | map(attribute='path') | map('basename') | list )
+        if control_app == 'all' else [control_app] }}

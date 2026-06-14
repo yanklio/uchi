@@ -1,0 +1,20 @@
+---
+- name: Setup neovim
+  block:
+    - name: Install neovim
+      ansible.builtin.package:
+        name: "{{ neovim_packages }}"
+        state: present
+      become: true
+
+    - name: Create .config/nvim directory
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/nvim"
+        state: directory
+        mode: "0755"
+
+    - name: Copy neovim config
+      ansible.builtin.copy:
+        src: .config/nvim/
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/nvim/"
+        backup: true

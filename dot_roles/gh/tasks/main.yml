@@ -1,0 +1,8 @@
+---
+- name: Setup gh
+  block:
+    - name: Install gh
+      ansible.builtin.package:
+        name: "{{ gh_packages }}"
+        state: present
+      become: true
