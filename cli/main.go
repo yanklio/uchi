@@ -465,12 +465,12 @@ func runAnsible(m model) error {
 	var playbookFile string
 	ansiblePlaybookConnectionOptions := &options.AnsibleConnectionOptions{}
 	ansiblePlaybookOptions := &playbook.AnsiblePlaybookOptions{
-		Inventory: "../inventory.yaml",
+		Inventory: "inventory.yaml",
 	}
 
 	switch m.executionMode {
 	case modeSetup:
-		playbookFile = "../playbooks/site.yml"
+		playbookFile = "playbooks/site.yml"
 
 		if limit := m.setupDevice.Value(); limit != "" {
 			ansiblePlaybookOptions.Limit = limit
@@ -480,7 +480,7 @@ func runAnsible(m model) error {
 		}
 
 	case modeControl:
-		playbookFile = "../playbooks/control.yml"
+		playbookFile = "playbooks/control.yml"
 
 		if limit := m.controlDevice.Value(); limit != "" {
 			ansiblePlaybookOptions.Limit = limit
@@ -501,7 +501,7 @@ func runAnsible(m model) error {
 		}
 
 	case modeExec:
-		playbookFile = "../playbooks/roles.yml"
+		playbookFile = "playbooks/roles.yml"
 
 		if limit := m.execDevice.Value(); limit != "" {
 			ansiblePlaybookOptions.Limit = limit
