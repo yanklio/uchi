@@ -464,6 +464,9 @@ func runAnsible(m model) error {
 
 	var playbookFile string
 	ansiblePlaybookConnectionOptions := &options.AnsibleConnectionOptions{}
+	ansiblePlaybookPrivilegeOptions := &options.AnsiblePrivilegeEscalationOptions{
+		AskBecomePass: true,
+	}
 	ansiblePlaybookOptions := &playbook.AnsiblePlaybookOptions{
 		Inventory: "inventory.yaml",
 	}
@@ -522,6 +525,7 @@ func runAnsible(m model) error {
 	pbCmd := &playbook.AnsiblePlaybookCmd{
 		Playbooks:         []string{playbookFile},
 		ConnectionOptions: ansiblePlaybookConnectionOptions,
+		PrivilegeEscalationOptions: ansiblePlaybookPrivilegeOptions,
 		Options:           ansiblePlaybookOptions,
 		Exec:              exe,
 	}
