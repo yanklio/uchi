@@ -374,9 +374,15 @@ func (m model) updateExec(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	var s strings.Builder
 
-	s.WriteString(titleStyle.Render(yanklioAscii))
-	s.WriteString(subtitleStyle.Render("Homelab Configuration CLI"))
-	s.WriteString("\n\n")
+	lines := strings.Split(strings.TrimSpace(yanklioAscii), "\n")
+	var asciiBuilder strings.Builder
+	for _, line := range lines {
+		asciiBuilder.WriteString(line + "\n")
+	}
+	title := titleStyle.Render(strings.TrimSuffix(asciiBuilder.String(), "\n"))
+	subtitle := subtitleStyle.Render("Homelab Configuration CLI")
+	s.WriteString(title + "\n\n")
+	s.WriteString(subtitle + "\n\n")
 
 	switch m.state {
 	case mainMenu:
@@ -453,6 +459,9 @@ func (m model) View() string {
 }
 
 func runAnsible(m model) error {
+	// Change to root directory to pick up ansible.cfg and correctly locate roles
+	os.Chdir("..")
+
 	var playbookFile string
 	ansiblePlaybookConnectionOptions := &options.AnsibleConnectionOptions{}
 	ansiblePlaybookOptions := &playbook.AnsiblePlaybookOptions{
