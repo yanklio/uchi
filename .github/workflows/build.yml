@@ -1,0 +1,43 @@
+name: Build CLI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21' # Specify your Go version here
+          cache-dependency-path: cli/go.sum
+
+      - name: Download Dependencies
+        working-directory: ./cli
+        run: go mod download
+
+      - name: Run Tests
+        working-directory: ./cli
+        run: go test -v ./...
+
+      - name: Build Unix Binary
+        working-directory: ./cli
+        env:
+          GOOS: linux
+          GOARCH: amd64
+        run: go build -o yanklio-cli main.go
+
+      - name: Upload Binary Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: yanklio-cli-linux-amd64
+          path: cli/yanklio-cli
