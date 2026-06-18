@@ -3,10 +3,10 @@ name: Build CLI
 on:
   push:
     branches:
-      - main
+      - uchi
   pull_request:
     branches:
-      - main
+      - uchi
 
 jobs:
   build:
@@ -34,7 +34,7 @@ jobs:
         env:
           GOOS: linux
           GOARCH: amd64
-        run: go build -o yanklio-cli main.go
+        run: go build -o yanklio-cli uchi.go
 
       - name: Upload Binary Artifact
         uses: actions/upload-artifact@v3
