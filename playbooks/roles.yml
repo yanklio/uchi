@@ -95,6 +95,12 @@
   roles:
     - _server
 
+- name: cockpit
+  hosts: server
+  tags: [cockpit]
+  roles:
+    - _cockpit
+
 - name: glance
   hosts: server
   tags: [glance]

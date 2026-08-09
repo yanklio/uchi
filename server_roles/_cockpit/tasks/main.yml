@@ -1,0 +1,85 @@
+---
+- name: Require a supported package manager for Cockpit
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['pkg_mgr'] in ['apt', 'dnf', 'dnf5']
+    fail_msg: "Cockpit package discovery supports apt and dnf hosts."
+
+- name: Check Cockpit package availability with apt
+  ansible.builtin.command:
+    argv: [apt-cache, show, "{{ item }}"]
+  loop: "{{ cockpit_packages + cockpit_optional_packages }}"
+  register: cockpit_apt_package_checks
+  changed_when: false
+  failed_when: false
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: Check Cockpit package availability with dnf
+  ansible.builtin.command:
+    argv: [dnf, repoquery, --quiet, "{{ item }}"]
+  loop: "{{ cockpit_packages + cockpit_optional_packages }}"
+  register: cockpit_dnf_package_checks
+  changed_when: false
+  failed_when: false
+  when: ansible_facts['pkg_mgr'] in ['dnf', 'dnf5']
+
+- name: Record available Cockpit packages
+  ansible.builtin.set_fact:
+    cockpit_available_packages: >-
+      {{ (cockpit_apt_package_checks.results
+          if ansible_facts['pkg_mgr'] == 'apt'
+          else cockpit_dnf_package_checks.results)
+         | selectattr('rc', 'equalto', 0)
+         | selectattr('stdout', 'defined')
+         | rejectattr('stdout', 'equalto', '')
+         | map(attribute='item')
+         | list }}
+
+- name: Require Cockpit core and Podman integration
+  ansible.builtin.assert:
+    that:
+      - cockpit_packages | difference(cockpit_available_packages) | length == 0
+    fail_msg: >-
+      Required Cockpit packages are unavailable:
+      {{ cockpit_packages | difference(cockpit_available_packages) | join(', ') }}
+
+- name: Install available Cockpit packages
+  ansible.builtin.package:
+    name: "{{ cockpit_available_packages }}"
+    state: present
+  become: true
+
+- name: Read Tailscale IPv4 address
+  ansible.builtin.command:
+    argv: [tailscale, ip, -4]
+  register: cockpit_tailscale_ip
+  changed_when: false
+
+- name: Require one Tailscale IPv4 address
+  ansible.builtin.assert:
+    that:
+      - cockpit_tailscale_ip.stdout_lines | select('match', '^100\\.') | list | length == 1
+    fail_msg: "Cockpit requires one active Tailscale IPv4 address and will not bind elsewhere."
+
+- name: Create Cockpit socket override directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/cockpit.socket.d
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Bind Cockpit socket to the Tailscale address
+  ansible.builtin.template:
+    src: tailscale.conf.j2
+    dest: /etc/systemd/system/cockpit.socket.d/tailscale.conf
+    mode: "0644"
+  become: true
+  notify: restart cockpit socket
+
+- name: Enable and start Cockpit socket
+  ansible.builtin.systemd_service:
+    name: cockpit.socket
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true

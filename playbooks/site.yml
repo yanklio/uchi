@@ -29,6 +29,7 @@
   roles:
     - _server
     - _nginx
+    - _cockpit
     - glance
     - hermes
     - openwebui

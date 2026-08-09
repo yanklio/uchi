@@ -1,0 +1,7 @@
+---
+cockpit_packages:
+  - cockpit
+  - cockpit-podman
+cockpit_optional_packages:
+  - cockpit-storaged
+  - cockpit-packagekit
