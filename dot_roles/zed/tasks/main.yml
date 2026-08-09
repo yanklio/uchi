@@ -11,7 +11,9 @@
       failed_when: false
 
     - name: Install zed
-      ansible.builtin.shell: "curl -fsSL {{ zed_install_url }} | sh"
+      ansible.builtin.shell: |
+        set -o pipefail
+        curl -fsSL {{ zed_install_url }} | sh
       args:
         executable: /bin/bash
       when: zed_check.rc != 0
@@ -22,8 +24,35 @@
         state: directory
         mode: "0755"
 
-    - name: Copy zed config
-      ansible.builtin.copy:
-        src: .config/zed/private_settings.json
-        dest: "{{ ansible_facts['env']['HOME'] }}/.config/zed/private_settings.json"
-        backup: true
+    - name: Read WakaTime API key from Proton Pass
+      ansible.builtin.include_role:
+        name: proton_pass
+        tasks_from: get_secret
+      vars:
+        proton_pass_item: "{{ zed_wakatime_pass_item }}"
+        proton_pass_vault: "{{ zed_wakatime_pass_vault }}"
+        proton_pass_field: "{{ zed_wakatime_pass_field }}"
+
+    - name: Check for existing zed config
+      ansible.builtin.stat:
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/zed/settings.json"
+      register: zed_settings
+
+    - name: Create zed config
+      ansible.builtin.template:
+        src: settings.json.j2
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/zed/settings.json"
+        mode: "0600"
+      vars:
+        zed_wakatime_api_key: "{{ proton_pass_secret }}"
+      when: not zed_settings.stat.exists
+      no_log: true
+
+    - name: Populate WakaTime API key in existing zed config
+      ansible.builtin.replace:
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/zed/settings.json"
+        regexp: '^(\s*"api-key"\s*:\s*)"[^"]*"(\s*,?\s*)$'
+        replace: '\1{{ proton_pass_secret | to_json }}\2'
+        mode: "0600"
+      when: zed_settings.stat.exists
+      no_log: true

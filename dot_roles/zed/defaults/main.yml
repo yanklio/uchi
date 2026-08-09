@@ -1,2 +1,5 @@
 ---
 zed_install_url: https://zed.dev/install.sh
+zed_wakatime_pass_item: WakaTime
+zed_wakatime_pass_vault: Dev
+zed_wakatime_pass_field: secret

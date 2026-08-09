@@ -1,0 +1,2 @@
+---
+proton_pass_cli_path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/pass-cli"
