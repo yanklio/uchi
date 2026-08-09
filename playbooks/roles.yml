@@ -89,6 +89,12 @@
   roles:
     - _nginx
 
+- name: server-base
+  hosts: server
+  tags: [server-base]
+  roles:
+    - _server
+
 - name: glance
   hosts: server
   tags: [glance]

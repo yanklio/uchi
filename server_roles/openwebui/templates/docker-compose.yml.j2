@@ -14,4 +14,4 @@ services:
       - ../../store/models/sentence-transformers:/app/backend/data/cache/embedding/models:z
       - ../../store/models/tiktoken:/app/backend/data/cache/tiktoken:z
       - ../../store/models/whisper:/app/backend/data/cache/whisper/models:z
-    restart: unless-stopped
+    restart: always

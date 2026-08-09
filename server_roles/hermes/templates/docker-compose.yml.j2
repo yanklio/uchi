@@ -23,4 +23,4 @@ services:
       - ../../store/browser/playwright:/opt/hermes/.playwright:z
       - ../../store/models/hermes:/opt/models:z
     shm_size: 1g
-    restart: unless-stopped
+    restart: always

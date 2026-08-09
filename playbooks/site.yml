@@ -27,7 +27,10 @@
   hosts: server
   tags: [server]
   roles:
+    - _server
     - _nginx
     - glance
     - hermes
     - openwebui
+    - role: _control
+      control_action: up
