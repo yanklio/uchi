@@ -23,28 +23,6 @@
       environment:
         XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts['user_uid'] }}"
 
-    - name: Check Podman restart service availability
-      ansible.builtin.command:
-        argv:
-          - systemctl
-          - --user
-          - show
-          - podman-restart.service
-          - --property=LoadState
-          - --value
-      register: podman_restart_service
-      changed_when: false
-      environment:
-        XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts['user_uid'] }}"
-
-    - name: Require Podman restart service
-      ansible.builtin.assert:
-        that:
-          - podman_restart_service.stdout | trim == 'loaded'
-        fail_msg: >-
-          podman-restart.service is unavailable; verify the installed Podman package
-          provides the user service needed to restore restart-policy containers.
-
     - name: Enable Podman restart service
       ansible.builtin.systemd_service:
         name: podman-restart.service
