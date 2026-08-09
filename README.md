@@ -27,3 +27,7 @@ ansible-playbook playbooks/control.yml -e control_action=up -e control_app=glanc
 - app state is stored under `~/serve/state`
 - shared caches and model stores are under `~/serve/store`
 - nginx service configs are written to `/etc/nginx/conf.d`
+- server hosts have systemd sleep and hibernation targets masked
+- rootless Podman apps return after boot according to their restart policy
+- a full `site.yml` run configures and starts all server apps
+- Cockpit provides host administration on port `9090` through Tailscale only
