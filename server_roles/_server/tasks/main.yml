@@ -9,3 +9,9 @@
     - suspend.target
     - hibernate.target
     - hybrid-sleep.target
+
+- name: Create SFTP file drop directory
+  ansible.builtin.file:
+    path: "{{ server_file_drop_dir }}"
+    state: directory
+    mode: "0750"

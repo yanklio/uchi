@@ -1,0 +1,6 @@
+---
+dependencies:
+  - role: tailscale
+  - role: podman
+  - role: _nginx
+  - role: _cockpit

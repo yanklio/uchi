@@ -1,4 +1,0 @@
----
-openwebui_image: ghcr.io/open-webui/open-webui:v0.6.26
-openwebui_nginx_port: 3000
-openwebui_name: Homelab Chat
