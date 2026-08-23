@@ -1,31 +1,18 @@
 # _server
 
-- disables sleep, suspend, and hibernation on server hosts
+Base server role:
 
-## Headless networking
+- installs and configures Tailscale, Podman, nginx, and Cockpit through role dependencies
+- disables sleep, suspend, and hibernation
+- creates `~/share` as a private SFTP file-drop directory
 
-Create Wi-Fi connections from root's NetworkManager UI so they are available before
-user login:
-
-```bash
-sudo nmtui
-nmcli -g connection.permissions,connection.autoconnect,802-11-wireless-security.psk-flags connection show "<profile>"
-```
-
-A boot-ready profile reports empty permissions, `yes`, and `0` respectively. Wired
-Ethernet is preferred for unattended servers.
-
-## Text-mode boot
+Upload a file over the existing SSH connection:
 
 ```bash
-sudo systemctl set-default multi-user.target
-sudo systemctl enable --now getty@tty1.service
-sudo systemctl disable lightdm
+sftp gmk-de
+put archive.zip share/
 ```
 
-Start the graphical login only when needed with `sudo systemctl start lightdm`. Restore
-graphical boot with `sudo systemctl set-default graphical.target` and
-`sudo systemctl enable lightdm`.
+Override `server_file_drop_dir` to use another path.
 
-After reboot, do not log in locally; verify `tailscale ping gmk-de`, SSH, and Cockpit
-at `https://<tailscale-ip>:9090` from another Tailscale device.
+Cockpit is available on port `9090` through Tailscale only.

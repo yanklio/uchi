@@ -83,17 +83,17 @@
   roles:
     - flatpak
 
-- name: nginx
-  hosts: server
-  tags: [nginx]
-  roles:
-    - _nginx
-
 - name: server-base
   hosts: server
   tags: [server-base]
   roles:
     - _server
+
+- name: nginx
+  hosts: server
+  tags: [nginx]
+  roles:
+    - _nginx
 
 - name: cockpit
   hosts: server
@@ -101,20 +101,8 @@
   roles:
     - _cockpit
 
-- name: glance
-  hosts: server
-  tags: [glance]
-  roles:
-    - glance
-
 - name: hermes
   hosts: server
   tags: [hermes]
   roles:
     - hermes
-
-- name: openwebui
-  hosts: server
-  tags: [openwebui]
-  roles:
-    - openwebui

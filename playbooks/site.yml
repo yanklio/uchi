@@ -12,14 +12,14 @@
     - node
     - ai-tools
     - ollama
-    - tailscale
-    - podman
     - gh
 
 - name: Apply workstation tools
   hosts: workstation
   tags: [workstation]
   roles:
+    - tailscale
+    - podman
     - zed
     - flatpak
 
@@ -28,10 +28,7 @@
   tags: [server]
   roles:
     - _server
-    - _nginx
-    - _cockpit
-    - glance
     - hermes
-    - openwebui
     - role: _control
       control_action: up
+      control_app: hermes

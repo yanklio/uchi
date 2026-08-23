@@ -1,0 +1,2 @@
+---
+server_file_drop_dir: "{{ ansible_facts['env']['HOME'] }}/share"
